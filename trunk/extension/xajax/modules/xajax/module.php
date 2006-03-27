@@ -1,5 +1,5 @@
 <?php
-    
+
 $Module = array( 'name' => 'Xajax', 'variable_params' => false );
 
 $ViewList = array();

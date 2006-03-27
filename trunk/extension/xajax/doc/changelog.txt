@@ -1,0 +1,4 @@
+
+1.0
+- Initial public release at ez.no
+- xajax 0.2.3 (library update by Bruce Morrison)

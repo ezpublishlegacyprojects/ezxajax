@@ -1,152 +1,50 @@
-In your pagelayout template, place the following template code between the head tags:
 
-{def $xajaxjs=xajax_javascript()}
-{$xajaxjs}
-{undef $xajaxjs}
+xajax extension for eZ publish
 
-You won't register new functions with xajax regularly, so you can place it in a non-expiring cache block:
+Copyright (C) 2005-2006 SCK-CEN
+Written by Kristof Coomans ( http://blog.kristofcoomans.be )
 
-{cache-block ignore_content_expiry expiry=0}
-{def $xajaxjs=xajax_javascript()}
-{$xajaxjs}
-{undef $xajaxjs}
-{/cache-block}
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
 
-Make sure your users have access to the xajax module (add a policy for the module).
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
 
-There are currently three functions registered with xajax by default. One of them is setPreferences. In JavaScript you can call it with xajax_setPreferences. It takes a hash of user preferences and stores them.
-
-A little example:
-
-Suppose you have a div you want to hide or show, like the content structure menu in the admin interface. It's useless that the whole page needs to be reloaded to show or hide the div and to remember the current state.
-
-<script type="text/javascript">
-<!--
-{literal}
-function toggleDisplayBlock(id)
-{
-    var el = document.getElementById(id);
-    
-    if ( el != null )
-    {
-        var style = el.style;
-        var currentDisplay;
-        var display;
-
-        if ( el.currentStyle )
-        {
-            // Internet Explorer way
-            currentDisplay = el.currentStyle.display;
-        }
-        else
-        {
-            // W3C DOM way
-            currentDisplay = document.defaultView.getComputedStyle(el, null).getPropertyValue( 'display' );
-        }
-
-        if ( currentDisplay == 'none' )
-        {
-            style.display = 'block';
-        }
-        else
-        {
-            style.display = 'none';
-        }
-        
-        return style.display;
-    }
-}
-
-function toggleAndRememberState(id, linkid)
-{
-    var newDisplayValue = toggleDisplayBlock(id);
-    
-    var linkel = document.getElementById(linkid)
-    if ( linkel != null )
-    {
-        if ( newDisplayValue == 'block' )
-        {
-            linkel.innerHTML = 'less';
-        }
-        else
-        {
-            linkel.innerHTML = 'more';
-        }
-    }
-    
-    var prefs = new Array(1);
-    prefs[id + '_display'] = newDisplayValue;
-    xajax_setPreferences(prefs);
-}
-{/literal}
--->
-</script>
-        
-{def $alertDisplay=ezpreference('alert_more_display')}
-{if $alertDisplay|eq(false())}
-{set $alertDisplay = 'none'}
-{/if}
-<div class="alert" id="alert">
-    <div class="title" id="alert_title">
-    Warning (<a href="#" id="alert_more_link" onclick="toggleAndRememberState( 'alert_more', 'alert_more_link' );return false;">{if $alertDisplay|eq('block')}less{else}more{/if}</a>)
-    </div>
-    <div class="more" id="alert_more" style="display:{$alertDisplay};">
-        <p>More information on this alert.</p>
-    </div>
-</div>
-{undef $alertDisplay}
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
-
-The two other functions registered with xajax are addNotification and removeNotification. They are used to handle subtree notifications. They both take the node id and an optional piece of JavaScript to call if they succeed.
-
-A little example:
-
-<script type="text/javascript">
-<!--
-
-function notificationRemoved()
-{ldelim}
-    var divid = 'notification_div';
-    var nodeid = {$node.node_id};
-    var el = document.getElementById(divid);
-
-    if ( el != null )
-    {ldelim}
-        var html = '<input id="notification_button" class="button" type="button" value="Keep me updated" onclick="xajax_addNotification(' + nodeid + ', \'notificationAdded()\' );">';
-        el.innerHTML = html;
-    {rdelim} 
-{rdelim}
-
-function notificationAdded()
-{ldelim}
-    var divid = 'notification_div';
-    var nodeid = {$node.node_id};
-    var el = document.getElementById(divid);
-
-    if ( el != null )
-    {ldelim}
-        var html = '<input id="notification_button" class="button" type="button" value="Remove notification" onclick="xajax_removeNotification(' + nodeid + ', \'notificationRemoved()\' );">';
-        el.innerHTML = html;
-    {rdelim}
-{rdelim}
-
--->
-</script>
-{def $subscriptions=fetch( 'notification', 'subscribed_nodes' ) $exists=false()}
-{foreach $subscriptions as $subscription}
-    {if $subscription.node.node_id|eq($node.node_id)}{set $exists=true()}{/if}
-{/foreach}
-
-<div id="notification_div">
-{if $exists}
-<input id="notification_button" class="button" type="button" value="Remove notification" onclick="xajax_removeNotification({$node.node_id}, 'notificationRemoved()');" />
-{else}
-<input id="notification_button" class="button" type="button" value="Keep me updated" onclick="xajax_addNotification({$node.node_id}, 'notificationAdded()');" />
-{/if}
-</div>
-{undef $subscriptions $exists}
+ Features
+************
+The xajax extension integrates the xajax PHP class library (http://www.xajaxproject.org/) 
+into eZ publish. It allows you to easily create powerful, web-based, Ajax applications.
 
 
+ Usage
+************
 
-Both examples have been tested with Mozilla Firefox 1.5, Internet Explorer 6 and Opera 8.5.1 on Windows XP with Service Pack 2.
+The xajax extension only contains the base files needed to make your eZ publish installation 
+ready for xajax. Specific xajax functions are placed in other extensions.
+
+Try out the xajax ClassAttributes extension (http://ez.no/community/contribs/hacks/xajax_classattributes) 
+to see how xajax can speedup the use of the admin interface.
+
+Documentation on how to write your own xajax eZ publish function plugins will be written soon.
+
+
+ Thanks to
+************
+
+... the eZ publish community for inspiring me.
+
+And especially to those who contributed to this extension, either with library upgrades, code, or 
+interesting ideas:
+
+- Paul Borgermans (http://walhalla.wordpress.com/)
+- Bruce Morisson (http://www.designit.com.au/)
+
