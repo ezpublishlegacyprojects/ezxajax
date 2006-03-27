@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // xajax.inc.php :: Main xajax class and setup file
 //
-// xajax version 0.2
+// xajax version 0.2.3
 // copyright (c) 2005 by Jared White & J. Max Wilson
 // http://xajax.sourceforge.net
 //
@@ -61,17 +61,19 @@ class xajax
 	var $sCatchAllFunction;		// Name of the PHP function to call if no callable function was found
 	var $sPreFunction;			// Name of the PHP function to call before any other function
 	var $sRequestURI;			// The URI for making requests to the xajax object
+	var $sWrapperPrefix;			// The prefix to prepend to the javascript wraper function name
 	var $bDebug;					// Show debug messages (true/false)
+	var $bStatusMessages;			// Show debug messages (true/false)
 	var $bExitAllowed;			// Allow xajax to exit after processing a request (true/false)
+	var $bWaitCursor;			// Use wait cursor in browser (true/false)
 	var $bErrorHandler;			// Use an special xajax error handler so the errors are sent to the browser properly
 	var $sLogFile;				// Specify if xajax should log errors (and more information in a future release)
-	var $sWrapperPrefix;			// The prefix to prepend to the javascript wraper function name
-	var $bStatusMessages;			// Show debug messages (true/false)
-	var $bWaitCursor;			// Use wait cursor in browser (true/false)
 	var $bCleanBuffer;			// Clean all output buffers before outputting response (true/false)
+	var $sEncoding;				// String containing the character encoding used.
+	var $bDecodeUTF8Input;		// Decode input request args from UTF-8 (true/false)
+	var $bOutputEntities;			// Convert special characters to HTML entities (true/false)
 	var $aObjArray;				// Array for parsing complex objects
 	var $iPos;					// Position in $aObjArray
-	var $sEncoding;				// The Character Encoding to use
 	
 	// Contructor
 	// $sRequestURI - defaults to the current page
@@ -88,13 +90,16 @@ class xajax
 		if ($this->sRequestURI == "")
 			$this->sRequestURI = $this->_detectURI();
 		$this->sWrapperPrefix = $sWrapperPrefix;
-		$this->setCharEncoding($sEncoding);
 		$this->bDebug = $bDebug;
+		$this->bStatusMessages = false;
 		$this->bWaitCursor = true;
 		$this->bExitAllowed = true;
 		$this->bErrorHandler = false;
 		$this->sLogFile = "";
-		$this->bCleanBuffer = true;
+		$this->bCleanBuffer = false;
+		$this->setCharEncoding($sEncoding);
+		$this->bDecodeUTF8Input = false;
+		$this->bOutputEntities = false;
 	}
 		
 	// setRequestURI() sets the URI to which requests will be made
@@ -102,6 +107,13 @@ class xajax
 	function setRequestURI($sRequestURI)
 	{
 		$this->sRequestURI = $sRequestURI;
+	}
+
+	// setWrapperPrefix() sets the prefix that will be appended to the Javascript
+	// wrapper functions (default is "xajax_").
+	function setWrapperPrefix($sPrefix)
+	{
+		$this->sWrapperPrefix = $sPrefix;
 	}
 	
 	// debugOn() enables debug messages for xajax
@@ -115,7 +127,7 @@ class xajax
 	{
 		$this->bDebug = false;
 	}
-	
+		
 	// statusMessagesOn() enables messages in the statusbar for xajax
 	function statusMessagesOn()
 	{
@@ -188,13 +200,6 @@ class xajax
 		$this->bCleanBuffer = false;
 	}
 	
-	// setWrapperPrefix() sets the prefix that will be appended to the Javascript
-	// wrapper functions (default is "xajax_").
-	function setWrapperPrefix($sPrefix)
-	{
-		$this->sWrapperPrefix = $sPrefix;
-	}
-	
 	// setCharEncoding() sets the character encoding to be used by xajax
 	// usage: $xajax->setCharEncoding("utf-8");
 	// *Note: to change the default character encoding for all xajax responses, set 
@@ -203,7 +208,34 @@ class xajax
 	{
 		$this->sEncoding = $sEncoding;
 	}
+
+	// decodeUTF8InputOn() causes xajax to decode the input request args from UTF-8 to the
+	// current encoding.
+	function decodeUTF8InputOn()
+	{
+		$this->bDecodeUTF8Input = true;
+	}
+	// decodeUTF8InputOff() turns off decoding the input request args from UTF-8.
+	// (default behavior)
+	function decodeUTF8InputOff()
+	{
+		$this->bDecodeUTF8Input = false;
+	}
 	
+	// outputEntitiesOn() tells the response object to convert special characters to
+	// HTML entities automatically (only works if the mb_string extension is available).
+	function outputEntitiesOn()
+	{
+		$this->bOutputEntities = true;
+	}
+	
+	// outputEntitiesOff() tells the response object to output special characters
+	// intact. (default behavior)
+	function outputEntitiesOff()
+	{
+		$this->bOutputEntities = false;
+	}
+				
 	// registerFunction() registers a PHP function or method to be callable through
 	// xajax in your Javascript. If you want to register a function, pass in the name
 	// of that function. If you want to register a static class method, pass in an array
@@ -349,7 +381,6 @@ class xajax
 			header ("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
 			header ("Cache-Control: no-cache, must-revalidate");
 			header ("Pragma: no-cache");
-			header("Content-type: text/xml");
 			
 			$sFunctionName = $_GET["xajax"];
 			
@@ -420,6 +451,10 @@ class xajax
 				{
 					$aArgs[$i] = $this->_xmlToArray("xjxquery",$aArgs[$i]);	
 				}
+				else if ($this->bDecodeUTF8Input)
+				{
+					$aArgs[$i] = $this->_decodeUTF8Data($aArgs[$i]);	
+				}
 			}
 
 			if ($this->sPreFunction) {
@@ -458,7 +493,7 @@ class xajax
 					$sResponse = $objResponse->getXML();
 				}
 				else if ($sPreResponse != "") {
-					$sNewResponse = new xajaxResponse();
+					$sNewResponse = new xajaxResponse($this->sEncoding, $this->bOutputEntities);
 					$sNewResponse->loadXML($sPreResponse);
 					$sNewResponse->loadXML($sResponse);
 					$sResponse = $sNewResponse->getXML();
@@ -511,9 +546,9 @@ class xajax
 	//	<head>
 	//		...
 	//		< ?php $xajax->printJavascript(); ? >
-	function printJavascript($sJsURI="", $sJsFile=NULL, $sJsFullFilename=NULL)
+	function printJavascript($sJsURI="", $sJsFile=NULL)
 	{
-		print $this->getJavascript($sJsURI, $sJsFile, $sJsFullFilename);
+		print $this->getJavascript($sJsURI, $sJsFile);
 	}
 	
 	// getJavascript() returns the xajax javascript code that should be added to
@@ -524,12 +559,18 @@ class xajax
 	//	<head>
 	//		...
 	//		< ?php echo $xajaxJSHead; ? >
-	function getJavascript($sJsURI="", $sJsFile=NULL, $sJsFullFilename=NULL)
+	function getJavascript($sJsURI="", $sJsFile=NULL)
 	{	
-		if ($sJsFile == NULL) $sJsFile = "xajax_js/xajax.js";
-			
-		if ($sJsURI != "" && substr($sJsURI, -1) != "/") $sJsURI .= "/";
+		$html = $this->getJavascriptConfig();
+		$html .= $this->getJavascriptInclude($sJsURI, $sJsFile);
 		
+		return $html;
+	}
+	
+	// getJavascriptConfig() returns a string containing inline Javascript that sets
+	// up the xajax runtime
+	function getJavascriptConfig()
+	{
 		$html  = "\t<script type=\"text/javascript\">\n";
 		$html .= "var xajaxRequestUri=\"".$this->sRequestURI."\";\n";
 		$html .= "var xajaxDebug=".($this->bDebug?"true":"false").";\n";
@@ -537,14 +578,40 @@ class xajax
 		$html .= "var xajaxWaitCursor=".($this->bWaitCursor?"true":"false").";\n";
 		$html .= "var xajaxDefinedGet=".XAJAX_GET.";\n";
 		$html .= "var xajaxDefinedPost=".XAJAX_POST.";\n";
+		$html .= "var xajaxLoaded=false;\n";
 
 		foreach($this->aFunctions as $sFunction => $bExists) {
 			$html .= $this->_wrap($sFunction,$this->aFunctionRequestTypes[$sFunction]);
 		}
 
-		$html .= "</script>\n";
+		$html .= "\t</script>\n";
+		return $html;		
+	}
+	
+	// getJavascriptInclude() returns a string containing a Javascript include of the
+	// xajax.js file along with a check to see if the file loaded after six seconds
+	function getJavascriptInclude($sJsURI="", $sJsFile=NULL)
+	{
+		if ($sJsFile == NULL) $sJsFile = "xajax_js/xajax.js";
+			
+		if ($sJsURI != "" && substr($sJsURI, -1) != "/") $sJsURI .= "/";
 		
-		// Create a compressed file if necessary
+		$html = "\t<script type=\"text/javascript\" src=\"" . $sJsURI . $sJsFile . "\"></script>\n";	
+		$html .= "\t<script type=\"text/javascript\">\n";
+		$html .= "window.setTimeout(function () { if (!xajaxLoaded) { alert('Error: the xajax Javascript file could not be included. Perhaps the URL is incorrect?\\nURL: {$sJsURI}{$sJsFile}'); } }, 6000);\n";
+		$html .= "\t</script>\n";
+		return $html;
+	}
+
+	// autoCompressJavascript() can be used to create a new xajax.js file out of the
+	// xajax_uncompressed.js file (which will only happen if xajax.js doesn't already
+	// exist on the filesystem).
+	// $sJsFullFilename is an optional argument containing the full server file path
+	//  of xajax.js.
+	function autoCompressJavascript($sJsFullFilename=NULL)
+	{	
+		$sJsFile = "xajax_js/xajax.js";
+		
 		if ($sJsFullFilename) {
 			$realJsFile = $sJsFullFilename;
 		}
@@ -552,18 +619,14 @@ class xajax
 			$realPath = realpath(dirname(__FILE__));
 			$realJsFile = $realPath . "/". $sJsFile;
 		}
-		$srcFile = str_replace(".js", "_uncompressed.js", $realJsFile);
-		if (!file_exists($srcFile)) {
-			trigger_error("The xajax uncompressed Javascript file could not be found in the <b>" . dirname($realJsFile) . "</b> folder. Error ", E_USER_ERROR);	
-		}
-		
-		if ($this->bDebug) {
-			if (!@copy($srcFile, $realJsFile)) {
-				trigger_error("The xajax uncompressed javascript file could not be copied to the <b>" . dirname($realJsFile) . "</b> folder. Error ", E_USER_ERROR);
+
+		// Create a compressed file if necessary
+		if (!file_exists($realJsFile)) {
+			$srcFile = str_replace(".js", "_uncompressed.js", $realJsFile);
+			if (!file_exists($srcFile)) {
+				trigger_error("The xajax uncompressed Javascript file could not be found in the <b>" . dirname($realJsFile) . "</b> folder. Error ", E_USER_ERROR);	
 			}
-		}
-		else if (!file_exists($realJsFile)) {
-			require(dirname(__FILE__) . "/xajaxCompress.php");
+			require("xajaxCompress.php");
 			$javaScript = implode('', file($srcFile));
 			$compressedScript = xajaxCompressJavascript($javaScript);
 			$fH = @fopen($realJsFile, "w");
@@ -575,12 +638,7 @@ class xajax
 				fclose($fH);
 			}
 		}
-
-		$html .= "\t<script type=\"text/javascript\" src=\"" . $sJsURI . $sJsFile . "\"></script>\n";		
-		
-		return $html;
 	}
-	
 	// _detectURL() returns the current URL based upon the SERVER vars
 	// used internally
 	function _detectURI() {
@@ -730,6 +788,14 @@ class xajax
 		$this->iPos = 0;
 		$aArray = $this->_parseObjXml($rootTag);
 		
+		if ($this->bDecodeUTF8Input)
+		{
+			foreach ($aArray as $sKey => $sValue)
+			{
+				$aArray[$sKey] = $this->_decodeUTF8Data($sValue);
+			}
+		}
+        
 		return $aArray;
 	}
 	
@@ -819,6 +885,52 @@ class xajax
 		
 		return $aArray;
 	}
+	
+	function _decodeUTF8Data($sData)
+	{
+		$sValue = $sData;
+		if ($this->bDecodeUTF8Input)
+		{
+			$sFuncToUse = NULL;
+			
+			if (function_exists('iconv'))
+			{
+				$sFuncToUse = "iconv";
+			}
+			else if (function_exists('mb_convert_encoding'))
+			{
+				$sFuncToUse = "mb_convert_encoding";
+			}
+			else if ($this->sEncoding == "ISO-8859-1")
+			{
+				$sFuncToUse = "utf8_decode";
+			}
+			else
+			{
+				trigger_error("The incoming xajax data could not be converted from UTF-8", E_USER_NOTICE);
+			}
+			
+			if ($sFuncToUse)
+			{
+				if (is_string($sValue))
+				{
+					if ($sFuncToUse == "iconv")
+					{
+						$sValue = iconv("UTF-8", $this->sEncoding.'//TRANSLIT', $sValue);
+					}
+					else if ($sFuncToUse == "mb_convert_encoding")
+					{
+						$sValue = mb_convert_encoding($sValue, $this->sEncoding, "UTF-8");
+					}
+					else
+					{
+						$sValue = utf8_decode($sValue);
+					}
+				}
+			}
+		}
+		return $sValue;	
+	}
 		
 }// end class xajax 
 
@@ -828,7 +940,7 @@ class xajax
 function xajaxErrorHandler($errno, $errstr, $errfile, $errline)
 {
 	$errorReporting = error_reporting();
-	if ($errorReporting == 0) return;
+	if (($errno & $errorReporting) == 0) return;
 	
 	if ($errno == E_NOTICE) {
 		$errTypeStr = "NOTICE";
