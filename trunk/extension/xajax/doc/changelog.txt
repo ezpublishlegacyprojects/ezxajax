@@ -2,3 +2,6 @@
 1.0
 - Initial public release at ez.no
 - xajax 0.2.3 (library update by Bruce Morrison)
+
+1.1
+- Upgraded xajax to 0.2.4 brucem@designit.com.au
