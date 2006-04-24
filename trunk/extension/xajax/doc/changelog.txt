@@ -5,3 +5,4 @@
 
 1.1
 - Upgraded xajax to 0.2.4 brucem@designit.com.au
+- Moved the xajax.ini file from settings to install directory

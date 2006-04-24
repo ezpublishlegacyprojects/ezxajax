@@ -11,11 +11,11 @@ should work fine.
  1. Move settings file
 ******************************
 
-Move (NOT copy) the xajax.ini file from the settings directory of the xajax 
-extension to the main settings directory under your eZ publish root.
+Move or copy the xajax.ini file from the install directory of the xajax 
+extension to the main settings directory in your eZ publish root directory.
 
-Don't skip this step! Otherwise it's possible that some xajax plugins don't 
-get loaded depending on the order of the activated extensions.
+Skipping this step won't harm, but it's better if the settings file is located at the 
+right place so you can easily find it.
 
 
  2. Activate extension
