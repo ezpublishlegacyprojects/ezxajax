@@ -2,19 +2,19 @@
  0. Rewrite rule
 ******************************
 
-Make sure the rewrite rules of your virtual host configuration allow direct 
-access to JavaScript files inside extensions. Using the rewrite rules mentioned 
-at http://ez.no/doc/ez_publish/technical_manual/3_6/installation/virtual_host_setup 
+Make sure the rewrite rules of your virtual host configuration allow direct
+access to JavaScript files inside extensions. Using the rewrite rules mentioned
+at http://ez.no/doc/ez_publish/technical_manual/3_6/installation/virtual_host_setup
 should work fine.
 
 
  1. Move settings file
 ******************************
 
-Move or copy the xajax.ini file from the install directory of the xajax 
+Move or copy the xajax.ini file from the install directory of the xajax
 extension to the main settings directory in your eZ publish root directory.
 
-Skipping this step won't harm, but it's better if the settings file is located at the 
+Skipping this step won't harm, but it's better if the settings file is located at the
 right place so you can easily find it.
 
 
@@ -31,10 +31,10 @@ ActiveExtensions[]=xajax
  3. Insert xajax JavaScript
 ******************************
 
-Insert the necessary xajax JavaScript between the opening and closing head tags 
-in your pagelayouts. You can use the xajax_javascript template operator to do this. 
+Insert the necessary xajax JavaScript between the opening and closing head tags
+in your pagelayouts. You can use the xajax_javascript template operator to do this.
 
-You won't register new functions with xajax regularly, so you can place it in a 
+You won't register new functions with xajax regularly, so you can place it in a
 non-expiring cache block.
 
 {cache-block ignore_content_expiry expiry=0}
@@ -47,8 +47,16 @@ non-expiring cache block.
 
 Add a policy for the xajax module to the desired roles.
 
+ 5. Enable apply button
+******************************
 
- 5. Clear caches
+Eventually you can show the apply button in the class edit interface, so it's easier to
+test certain functionality. Put this in content.ini.append(.php):
+
+[ClassSettings]
+ApplyButton=enabled
+
+ 6. Clear caches
 ******************************
 
 You will probably need to clear the INI and template caches.
