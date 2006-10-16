@@ -1,23 +1,44 @@
-====================================================================
- xajax PHP Class Library
- The easiest way to develop asynchronous Ajax applications with PHP
+===============================================================================
+ xajax PHP & Javascript Library
+ The easiest way to develop powerful Ajax applications with PHP
 
- Version 0.2.4 (stable release)
+ Version 0.5 (Beta 1)
  README Text File
 
  ------------------------------------------------------
  | Release Notes:                                     |
- | http://wiki.xajaxproject.org/0.2.4_Release_Notes   |
+ | See release_notes.txt in this download archive     |
  |                                                    |
  | Lead Developers:                                   |
  | Jared White (jared@intuitivefuture.com)            |
  | J. Max Wilson (jmaxwilson@users.sourceforge.net)   |
  | Eion Robb (eion@bigfoot.com)                       |
  ------------------------------------------------------
-====================================================================
+===============================================================================
 
- :: To find out what's changed since the 0.2.3 release of xajax, ::
- :: view the Release Notes in the link above.                    ::
+ :: To find out what's changed since the 0.2.4 release of xajax, ::
+ :: view the Release Notes in the file listed above.             ::
+
+
+** THIS IS AN EARLY BETA RELEASE OF 0.5 **
+
+We're very excited about this initial beta release of 0.5, but please be aware
+that (a) there are absolutely no guarantees we won't change all kinds of things
+before the final 0.5 release, and (b) it's possible that this version will
+break your PHP apps and maybe not even work on your server. That's why this
+is a beta. :)
+
+The rest of this readme is the same as the 0.2.4 readme, which means some of
+its information is incorrect now with the 0.5 changes. Please read the release
+notes in release_notes.txt to see what's new.
+
+Thank you for testing out 0.5 Beta 1! Please visit our forums at
+http://community.xajaxproject.com and give us your feedback. You can also
+report bugs you find at http://www.sourceforge.net/projects/xajax using our bug
+tracker.
+
+
+____________________________________________________________________
 
 1. Introduction
 
