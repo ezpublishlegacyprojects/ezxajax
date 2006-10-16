@@ -42,7 +42,7 @@ class XajaxOperator
         {
             case 'xajax_javascript':
                 {
-                    include_once( 'extension/xajax/lib/xajax/xajax.inc.php' );
+                    include_once( 'extension/xajax/lib/xajax/xajax_core/xajax.inc.php' );
                     include_once( 'lib/ezutils/classes/ezuri.php' );
                     $xajaxModuleView = '/xajax/call';
                     eZURI::transformURI( $xajaxModuleView );
@@ -52,10 +52,12 @@ class XajaxOperator
                     include_once( 'lib/ezutils/classes/ezini.php' );
                 
                     $ini =& eZINI::instance( 'xajax.ini' );
-                    
+                    $javascriptFile = 'xajax.js';
+
                     if ( $ini->variable( 'DebugSettings', 'DebugAlert' ) == 'enabled' )
                     {
-                        $xajax->debugOn();
+                        $xajax->setFlag( 'debug', true );
+                        $javascriptFile = 'xajax_uncompressed.js';
                     }
                     
                     $functionFiles = $ini->variable( 'ExtensionSettings', 'AvailableFunctions' );
@@ -71,7 +73,7 @@ class XajaxOperator
                                 $handlerFile = $directory . '/' . strtolower( $functionFile ) . '.php';
                                 if ( file_exists( $handlerFile ) )
                                 {
-                                    $xajax->registerExternalFunction( $function, $handlerFile );
+                                    $xajax->registerFunction( $function, $handlerFile );
                                 }
                             }
                         }
@@ -79,7 +81,7 @@ class XajaxOperator
                     
                     include_once( 'lib/ezutils/classes/ezsys.php' );
                     $sys =& eZSys::instance();
-                    $operatorValue = $xajax->getJavascript( $sys->wwwDir() . '/extension/xajax/design/standard/javascript/', 'xajax.js', 'extension/xajax/design/standard/javascript/xajax.js' );
+                    $operatorValue = $xajax->getJavascript( $sys->wwwDir() . '/extension/xajax/design/standard/javascript/', $javascriptFile, 'extension/xajax/design/standard/javascript/xajax.js' );
 
                 }break;
             default:

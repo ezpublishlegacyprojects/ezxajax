@@ -1,10 +1,10 @@
 <?php
 
-    include_once( 'extension/xajax/lib/xajax/xajax.inc.php' );
+    include_once( 'extension/xajax/lib/xajax/xajax_core/xajax.inc.php' );
     include_once( 'lib/ezutils/classes/ezsys.php' );
 
     $xajax = new xajax( eZSys::indexDir() . '/xajax/call' );
-    
+
     include_once( 'lib/ezutils/classes/ezextension.php' );
     include_once( 'lib/ezutils/classes/ezini.php' );
 
@@ -12,7 +12,7 @@
 
     if ( $ini->variable( 'DebugSettings', 'DebugAlert' ) == 'enabled' )
     {
-        $xajax->debugOn();
+        $xajax->setFlag( 'debug', true );
     }
 
     $functionFiles = $ini->variable( 'ExtensionSettings', 'AvailableFunctions' );
@@ -28,7 +28,7 @@
                 $handlerFile = $directory . '/' . strtolower( $functionFile ) . '.php';
                 if ( file_exists( $handlerFile ) )
                 {
-                    $xajax->registerExternalFunction( $function, $handlerFile );
+                    $xajax->registerFunction( $function, $handlerFile );
                 }
             }
         }
@@ -37,5 +37,5 @@
     include_once( 'lib/ezutils/classes/ezexecution.php' );
     eZExecution::setCleanExit( );
 
-    $xajax->processRequests( );
+    $xajax->processRequest();
 ?>

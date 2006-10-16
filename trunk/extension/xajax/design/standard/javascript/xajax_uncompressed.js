@@ -1,22 +1,26 @@
-/* xajax Javascript library :: version 0.2.4 */
+/* xajax Javascript library :: version 0.5 (Beta 1) */
 
-Array.prototype.containsValue = function(valueToCheck)
-{
-	for (var i=0;i<this.length;i++) {
-		if (this[i] == valueToCheck) return true;
-	}
-	return false;
-}
+var xajax = {
 
-function Xajax()
-{
-	this.DebugMessage = function(text)
+	// see xajax.setCallOptions for option info
+	callOptions: { method: 'post' },
+	workId: 'xajaxWork'+ new Date().getTime(),
+	depth: 0,
+	eventFunctions: {
+		globalRequestDelay: null,
+		globalRequestComplete: null
+	},
+	delayEventTime: 400,
+	delayTimer: null,
+	responseErrorsForAlert: ["400","401","402","403","404","500","501","502","503"],
+
+	DebugMessage: function(text)
 	{
 		if (text.length > 1000) text = text.substr(0,1000)+"...\n[long response]\n...";
 		try {
 			if (this.debugWindow == undefined || this.debugWindow.closed == true) {
-				this.debugWindow = window.open('about:blank', 'xajax-debug', 'width=800,height=600,scrollbars=1,resizable,status');
-				this.debugWindow.document.write('<html><head><title>Xajax debug output</title></head><body><h2>Xajax debug output</h2><div id="debugTag"></div></body></html>');
+				this.debugWindow = window.open('about:blank', 'xajax_debug_'+this.workId, 'width=800,height=600,scrollbars=yes,resizable=yes,status=yes');
+				this.debugWindow.document.write('<html><head><title>xajax debug output</title></head><body><h2>xajax debug output</h2><div id="debugTag"></div></body></html>');
 			}
 			text = text.replace(/&/g, "&amp;")
 			text = text.replace(/</g, "&lt;")
@@ -24,18 +28,20 @@ function Xajax()
 			debugTag = this.debugWindow.document.getElementById('debugTag');
 			debugTag.innerHTML = ('<b>'+(new Date()).toString()+'</b>: ' + text + '<hr/>') + debugTag.innerHTML;
 		} catch (e) {
-			alert("Xajax Debug:\n " + text);
+			alert("xajax Debug:\n " + text);
 		}
-	};
+	},
 	
-	this.workId = 'xajaxWork'+ new Date().getTime();
-	this.depth = 0;
-	this.responseErrorsForAlert = ["400","401","402","403","404","500","501","502","503"];
+	isEventFunction: function(mFunction)
+	{
+		if (mFunction && typeof mFunction == "function") return true;
+		return false;
+	},
 	
 	//Get the XMLHttpRequest Object
-	this.getRequestObject = function()
+	getRequestObject: function()
 	{
-		if (xajaxDebug) this.DebugMessage("Initializing Request Object..");
+		if (xajaxConfig.debug) this.DebugMessage("Initializing Request Object..");
 		var req = null;
 		if (typeof XMLHttpRequest != "undefined")
 			req = new XMLHttpRequest();
@@ -69,10 +75,10 @@ function Xajax()
 		if (!req) this.DebugMessage("Request Object Instantiation failed.");
 			
 		return req;
-	}
+	},
 
 	// xajax.$() is shorthand for document.getElementById()
-	this.$ = function(sId)
+	$: function(sId)
 	{
 		if (!sId) {
 			return null;
@@ -81,23 +87,47 @@ function Xajax()
 		if (!returnObj && document.all) {
 			returnObj = document.all[sId];
 		}
-		if (xajaxDebug && !returnObj && sId != this.workId) {
+		if (xajaxConfig.debug && !returnObj) {
 			this.DebugMessage("Element with the id \"" + sId + "\" not found.");
 		}
 		return returnObj;
-	}
+	},
 	
 	// xajax.include(sFileName) dynamically includes an external javascript file
-	this.include = function(sFileName)
+	include: function(sFileName)
 	{
 		var objHead = document.getElementsByTagName('head');
 		var objScript = document.createElement('script');
 		objScript.type = 'text/javascript';
 		objScript.src = sFileName;
 		objHead[0].appendChild(objScript);
-	}
+	},
 	
-	this.stripOnPrefix = function(sEventName)
+	// xajax.includeOnce(sFileName) dynamically includes an external javascript
+	//     file, if it hasn't already been loaded in
+	includeOnce: function(sFileName)
+	{
+		//Check to see if this file has already been loaded
+        var loadedScripts = document.getElementsByTagName('script');
+        for (var i = 0; i < loadedScripts.length; i++) {
+            if (loadedScripts[i].src && loadedScripts[i].src.indexOf(sFileName) == 0)
+            	return;
+        }
+        return this.include(sFileName);
+	},
+	
+	// xajax.include(sFileName) dynamically includes an external CSS file
+	addCSS: function(sFileName)
+	{
+		var objHead = document.getElementsByTagName('head');
+		var objCSS = document.createElement('link');
+		objCSS.rel = 'stylesheet';
+		objCSS.type = 'text/css';
+		objCSS.href = sFileName;
+		objHead[0].appendChild(objCSS);
+	},
+	
+	stripOnPrefix: function(sEventName)
 	{
 		sEventName = sEventName.toLowerCase();
 		if (sEventName.indexOf('on') == 0)
@@ -106,9 +136,9 @@ function Xajax()
 		}
 		
 		return sEventName;
-	}
+	},
 	
-	this.addOnPrefix = function(sEventName)
+	addOnPrefix: function(sEventName)
 	{
 		sEventName = sEventName.toLowerCase();
 		if (sEventName.indexOf('on') != 0)
@@ -117,10 +147,10 @@ function Xajax()
 		}
 		
 		return sEventName;
-	}
+	},
 	
 	// xajax.addHandler adds an event handler to an element
-	this.addHandler = function(sElementId, sEvent, sFunctionName)
+	addHandler: function(sElementId, sEvent, sFunctionName)
 	{
 		if (window.addEventListener)
 		{
@@ -132,10 +162,10 @@ function Xajax()
 			sAltEvent = this.addOnPrefix(sEvent);
 			eval("this.$('"+sElementId+"').attachEvent('"+sAltEvent+"',"+sFunctionName+",false);");
 		}
-	}
+	},
 	
 	// xajax.removeHandler removes an event handler from an element
-	this.removeHandler = function(sElementId, sEvent, sFunctionName)
+	removeHandler: function(sElementId, sEvent, sFunctionName)
 	{
 		if (window.addEventListener)
 		{
@@ -147,37 +177,37 @@ function Xajax()
 			sAltEvent = this.addOnPrefix(sEvent);
 			eval("this.$('"+sElementId+"').detachEvent('"+sAltEvent+"',"+sFunctionName+",false);");
 		}
-	}
+	},
 	
 	// xajax.create creates a new child node under a parent
-	this.create = function(sParentId, sTag, sId)
+	create: function(sParentId, sTag, sId)
 	{
 		var objParent = this.$(sParentId);
 		objElement = document.createElement(sTag);
 		objElement.setAttribute('id',sId);
 		if (objParent)
 			objParent.appendChild(objElement);
-	}
+	},
 	
 	// xajax.insert inserts a new node before another node
-	this.insert = function(sBeforeId, sTag, sId)
+	insert: function(sBeforeId, sTag, sId)
 	{
 		var objSibling = this.$(sBeforeId);
 		objElement = document.createElement(sTag);
 		objElement.setAttribute('id',sId);
 		objSibling.parentNode.insertBefore(objElement, objSibling);
-	}
+	},
 
 	// xajax.insertAfter inserts a new node after another node
-	this.insertAfter = function(sAfterId, sTag, sId)
+	insertAfter: function(sAfterId, sTag, sId)
 	{
 		var objSibling = this.$(sAfterId);
 		objElement = document.createElement(sTag);
 		objElement.setAttribute('id',sId);
 		objSibling.parentNode.insertBefore(objElement, objSibling.nextSibling);
-	}
+	},
 	
-	this.getInput = function(sType, sName, sId)
+	getInput: function(sType, sName, sId)
 	{
 		var Obj;
 		if (!window.addEventListener)
@@ -192,49 +222,48 @@ function Xajax()
 			Obj.setAttribute('id',sId);
 		}
 		return Obj;
-	}
+	},
 	
 	// xajax.createInput creates a new input node under a parent
-	this.createInput = function(sParentId, sType, sName, sId)
+	createInput: function(sParentId, sType, sName, sId)
 	{
 		var objParent = this.$(sParentId);
 		var objElement = this.getInput(sType, sName, sId);
 		if (objParent && objElement)
 			objParent.appendChild(objElement);
-	}
+	},
 	
 	// xajax.insertInput creates a new input node before another node
-	this.insertInput = function(sBeforeId, sType, sName, sId)
+	insertInput: function(sBeforeId, sType, sName, sId)
 	{
 		var objSibling = this.$(sBeforeId);
 		var objElement = this.getInput(sType, sName, sId);
 		if (objElement && objSibling && objSibling.parentNode)
 			objSibling.parentNode.insertBefore(objElement, objSibling);
-	}
-
-	// xajax.insertInputAfter creates a new input node after another node
-	this.insertInputAfter = function(sAfterId, sType, sName, sId)
+	},
+	
+	insertInputAfter: function(sAfterId, sType, sName, sId)
 	{
 		var objSibling = this.$(sAfterId);
 		var objElement = this.getInput(sType, sName, sId);
 		if (objElement && objSibling && objSibling.parentNode) {
 			objSibling.parentNode.insertBefore(objElement, objSibling.nextSibling);
 		}
-	}
-		
+	},
+	
 	// xajax.remove deletes an element
-	this.remove = function(sId)
+	remove: function(sId)
 	{
 		objElement = this.$(sId);
 		if (objElement && objElement.parentNode && objElement.parentNode.removeChild)
 		{
 			objElement.parentNode.removeChild(objElement);
 		}
-	}
+	},
 	
 	//xajax.replace searches for text in an attribute of an element and replaces it
 	//with a different text
-	this.replace = function(sId,sAttribute,sSearch,sReplace)
+	replace: function(sId,sAttribute,sSearch,sReplace)
 	{
 		var bFunction = false;
 		
@@ -266,14 +295,14 @@ function Xajax()
 				eval('this.$("'+sId+'").'+sAttribute+'=newTxt;');
 			}
 		}
-	}
+	},
 	
 	// xajax.getFormValues() builds a query string XML message from the elements of a form object
 	// * The first argument is the id of the form
 	// * The second argument (optional) can be set to true if you want to submit disabled elements
 	// * The third argument (optional) allows you to specify a string prefix that a form element
 	//   name must contain if you want that element to be submitted
-	this.getFormValues = function(frm)
+	getFormValues: function(frm)
 	{
 		var objForm;
 		var submitDisabledElements = false;
@@ -288,7 +317,7 @@ function Xajax()
 		else
 			objForm = frm;
 		var sXml = "<xjxquery><q>";
-		if (objForm && objForm.tagName == 'FORM')
+		if (objForm && objForm.tagName && objForm.tagName.toUpperCase() == 'FORM')
 		{
 			var formElements = objForm.elements;
 			for( var i=0; i < formElements.length; i++)
@@ -308,6 +337,8 @@ function Xajax()
 						sXml += '&';
 					if(formElements[i].type=='select-multiple')
 					{
+						if (name.substr(name.length-2,2) != '[]')
+							name += '[]';
 						for (var j = 0; j < formElements[i].length; j++)
 						{
 							if (formElements[i].options[j].selected == true)
@@ -325,10 +356,10 @@ function Xajax()
 		sXml +="</q></xjxquery>";
 		
 		return sXml;
-	}
+	},
 	
 	// Generates an XML message that xajax can understand from a javascript object
-	this.objectToXML = function(obj)
+	objectToXML: function(obj)
 	{
 		var sXml = "<xjxobj>";
 		for (i in obj)
@@ -348,27 +379,32 @@ function Xajax()
 					value = this.objectToXML(value);
 					this.depth--;
 				}
-				
-				sXml += "<e><k>"+key+"</k><v>"+value+"</v></e>";
-				
+				else
+				{
+					//escape CDATA sections
+					key = key.replace(/]]>/g,']]]]><![CDATA[>');
+					value = value.replace(/]]>/g,']]]]><![CDATA[>');
+				}
+				sXml += "<e><k><![CDATA["+key+"]]></k><v><![CDATA["+value+"]]></v></e>";
 			}
 			catch(e)
 			{
-				if (xajaxDebug) this.DebugMessage(e.name+": "+e.message);
+				if (xajaxConfig.debug) this.DebugMessage(e.name+": "+e.message);
 			}
 		}
 		sXml += "</xjxobj>";
 	
 		return sXml;
-	}
-
+	},
+	
 	// unserializes data structure from xajaxResponse::_buildObjXml()
-	this._nodeToObject = function(node) {
+	_nodeToObject: function(node) {
 		// parentNode here is weird, have to tune
 		if (node.nodeName == '#cdata-section') {
-			var data = "";
-			for (var j=0; j<node.parentNode.childNodes.length; j++) {
-				data += node.parentNode.childNodes[j].data;
+			var data = node.data;
+			while (node = node.nextSibling)
+			{
+				data += node.data;
 			}
 			return data;
 		}
@@ -384,7 +420,10 @@ function Xajax()
 							key = child.childNodes[k].firstChild.data;
 						}
 						else if (child.childNodes[k].nodeName == 'v') {
-							value = this._nodeToObject(child.childNodes[k].firstChild);
+							if (child.childNodes[k].firstChild == null)
+								value = '';
+							else
+								value = this._nodeToObject(child.childNodes[k].firstChild);
 						}
 					}
 					if (key != null && value != null) {
@@ -395,68 +434,104 @@ function Xajax()
 			}
 			return data;
 		}		
-	}
-
-	this.loadingFunction = function(){};
-	this.doneLoadingFunction = function(){};
-	var loadingTimeout;
-
+	},
+	
+	runDelayEvents: function()
+	{
+		if (this.isEventFunction(this.eventFunctions.globalRequestDelay)) {
+			this.eventFunctions.globalRequestDelay();
+		}
+		if (this.isEventFunction(this.callOptions.onRequestDelay)) {
+			this.callOptions.onRequestDelay();
+		}
+	},
+	
+	setCallOptions: function(aOptions)
+	{
+		this.callOptions = {
+			URI: "",
+			parameters: null,
+			onRequestDelay: null,
+			beforeResponse: null,
+			onResponse: null,
+			responseHandler: null
+		};
+		for (optionKey in aOptions) {
+			this.callOptions[optionKey] = aOptions[optionKey];
+		}
+	},
+	
 	// Sends a XMLHttpRequest to call the specified PHP function on the server
-	// * sRequestType is optional -- defaults to POST
-	this.call = function(sFunction, aArgs, sRequestType)
+	// * aOptions is optional -- can contain the following options...
+	// TODO: add options
+	call: function(sFunction, aOptions)
 	{
 		var i,r,postData;
-		if (document.body && xajaxWaitCursor)
+		this.setCallOptions(aOptions);
+		if (document.body && xajaxConfig.waitCursor)
 			document.body.style.cursor = 'wait';
-		if (xajaxStatusMessages == true) window.status = 'Sending Request...';
-		clearTimeout(loadingTimeout);
-		loadingTimeout = setTimeout("xajax.loadingFunction();",400);
-		if (xajaxDebug) this.DebugMessage("Starting xajax...");
-		if (sRequestType == null) {
-		   var xajaxRequestType = xajaxDefinedPost;
+		if (xajaxConfig.statusMessages == true) window.status = 'Sending Request...';
+
+		// legacy support
+		if (xajax.loadingFunction != undefined) {
+			xajax.eventFunctions.globalRequestDelay = xajax.loadingFunction;
+		}
+		if (xajax.doneLoadingFunction != undefined) {
+			xajax.eventFunctions.globalRequestComplete = xajax.doneLoadingFunction;
+		}
+
+		clearTimeout(this.delayTimer);
+		this.delayTimer = setTimeout("xajax.runDelayEvents()", this.delayEventTime);
+
+		if (xajaxConfig.debug) this.DebugMessage("Starting xajax...");
+		if (!this.callOptions.method) {
+			var requestType = "post";
 		}
 		else {
-			var xajaxRequestType = sRequestType;
+			var requestType = this.callOptions.method;
+			if (requestType != ("get" || "post")) {
+				requestType = "post";
+			}
 		}
-		var uri = xajaxRequestUri;
+		if (this.callOptions.URI) {
+			var uri = this.callOptions.URI;
+		}
+		else {
+			var uri = xajaxConfig.requestURI;
+		}
 		var value;
-		switch(xajaxRequestType)
+		var aArgs = this.callOptions.parameters;
+		
+		postData = "xajax="+encodeURIComponent(sFunction);
+		postData += "&xajaxr="+new Date().getTime();
+		if (aArgs) {
+			for (i = 0; i <aArgs.length; i++)
+			{
+				value = aArgs[i];
+				if (typeof(value)=="object")
+					value = this.objectToXML(value);
+				postData += "&xajaxargs[]="+encodeURIComponent(value);
+			}
+		}
+		
+		switch(requestType)
 		{
-			case xajaxDefinedGet:{
-				var uriGet = uri.indexOf("?")==-1?"?xajax="+encodeURIComponent(sFunction):"&xajax="+encodeURIComponent(sFunction);
-				if (aArgs) {
-					for (i = 0; i<aArgs.length; i++)
-					{
-						value = aArgs[i];
-						if (typeof(value)=="object")
-							value = this.objectToXML(value);
-						uriGet += "&xajaxargs[]="+encodeURIComponent(value);
-					}
-				}
-				uriGet += "&xajaxr=" + new Date().getTime();
+			case "get": {
+				var uriGet = uri.indexOf("?")==-1?"?":"&";
+				uriGet += postData;
 				uri += uriGet;
 				postData = null;
 				} break;
-			case xajaxDefinedPost:{
-				postData = "xajax="+encodeURIComponent(sFunction);
-				postData += "&xajaxr="+new Date().getTime();
-				if (aArgs) {
-					for (i = 0; i <aArgs.length; i++)
-					{
-						value = aArgs[i];
-						if (typeof(value)=="object")
-							value = this.objectToXML(value);
-						postData = postData+"&xajaxargs[]="+encodeURIComponent(value);
-					}
-				}
+			case "post": {
+				
 				} break;
 			default:
-				alert("Illegal request type: " + xajaxRequestType); return false; break;
+				alert("Illegal request type: " + requestType); return false; break;
 		}
 		r = this.getRequestObject();
 		if (!r) return false;
-		r.open(xajaxRequestType==xajaxDefinedGet?"GET":"POST", uri, true);
-		if (xajaxRequestType == xajaxDefinedPost)
+		r.open(requestType, uri, true);
+		if (requestType == "post")
 		{
 			try
 			{
@@ -465,111 +540,95 @@ function Xajax()
 			}
 			catch(e)
 			{
-				alert("Your browser does not appear to  support asynchronous requests using POST.");
-				return false;
+				delete r;
+				r = null;
+				aOptions.method = 'get';
+				return this.call(sFunction, aOptions);
 			}
+		} else {
+			r.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
 		}
 		r.onreadystatechange = function()
 		{
 			if (r.readyState != 4)
 				return;
-			
-			if (r.status==200)
+			xajax.readyStateChange(r);
+			delete r;
+			r = null;
+		}
+		if (xajaxConfig.debug) this.DebugMessage("Calling "+sFunction +" uri="+uri+" (post:"+ postData +")");
+		r.send(postData);
+		if (xajaxConfig.statusMessages == true) window.status = 'Waiting for data...';
+		delete r;
+		return true;
+	},
+	
+	//called by XMLHttpRequest.onreadystatechange
+	readyStateChange: function(r)
+	{
+		try {
+			if (r.status == 0 || r.status == 200)
 			{
-				if (xajaxDebug) xajax.DebugMessage("Received:\n" + r.responseText);
-				if (r.responseXML && r.responseXML.documentElement)
-					xajax.processResponse(r.responseXML);
+				if (xajaxConfig.debug) xajax.DebugMessage("Received:\n" + r.responseText);
+				if (r.responseXML && r.responseXML.documentElement && r.responseXML.documentElement.nodeName == 'xjx')
+					this.processResponse(r.responseXML);
+				else if (this.isEventFunction(this.callOptions.responseHandler))
+				{
+					this.callOptions.responseHandler(r);
+					this.completeResponse();
+				}
+				else if (r.responseText == "") 
+					this.completeResponse();
 				else {
 					var errorString = "Error: the XML response that was returned from the server is invalid.";
 					errorString += "\nReceived:\n" + r.responseText;
 					trimmedResponseText = r.responseText.replace( /^\s+/g, "" );// strip leading space
-					trimmedResponseText = trimmedResponseText.replace( /\s+$/g, "" );// strip trailing
 					if (trimmedResponseText != r.responseText)
-						errorString += "\nYou have whitespace in your response.";
+						errorString += "\nYou have whitespace at the beginning of your response.";
+
+					trimmedResponseText = r.responseText.replace( /\s+$/g, "" );// strip trailing
+					if (trimmedResponseText != r.responseText)
+						errorString += "\nYou have whitespace at the end of your response.";
 					alert(errorString);
-					document.body.style.cursor = 'default';
-					if (xajaxStatusMessages == true) window.status = 'Invalid XML response error';				
+					this.completeResponse();
+					if (xajaxConfig.statusMessages == true) window.status = 'Invalid XML response error';				
 				}
 			}
 			else {
-				if (xajax.responseErrorsForAlert.containsValue(r.status)) {
+				if (this.arrayContainsValue(this.responseErrorsForAlert, r.status)) {
 					var errorString = "Error: the server returned the following HTTP status: " + r.status;
 					errorString += "\nReceived:\n" + r.responseText;
 					alert(errorString);
 				}
-				document.body.style.cursor = 'default';
-				if (xajaxStatusMessages == true) window.status = 'Invalid XML response error';								
+				this.completeResponse();
+				if (this.statusMessages == true) window.status = 'Invalid XML response error';								
 			}
-			
-			delete r;
-			r = null;
-		}
-		if (xajaxDebug) this.DebugMessage("Calling "+sFunction +" uri="+uri+" (post:"+ postData +")");
-		r.send(postData);
-		if (xajaxStatusMessages == true) window.status = 'Waiting for data...';
-		delete r;
-		return true;
-	}
-	
-	//Gets the text as it would be if it were being retrieved from
-	//the innerHTML property in the current browser
-	this.getBrowserHTML = function(html)
-	{
-		tmpXajax = this.$(this.workId);
-		if (!tmpXajax)
-		{
-			tmpXajax = document.createElement("div");
-			tmpXajax.setAttribute('id',this.workId);
-			tmpXajax.style.display = "none";
-			tmpXajax.style.visibility = "hidden";
-			document.body.appendChild(tmpXajax);
-		}
-		tmpXajax.innerHTML = html;
-		var browserHTML = tmpXajax.innerHTML;
-		tmpXajax.innerHTML = '';	
-		
-		return browserHTML;
-	}
-	
-	// Tests if the new Data is the same as the extant data
-	this.willChange = function(element, attribute, newData)
-	{
-		if (!document.body)
-		{
-			return true;
-		}
-		if (attribute == "innerHTML")
-		{
-			newData = this.getBrowserHTML(newData);
-		}
-		elementObject = this.$(element);
-		if (elementObject) {
-			var oldData;		
-			eval("oldData=this.$('"+element+"')."+attribute);
-			if (newData !== oldData)
-				return true;
-		}
+		} catch (e) {}
+	},
 
-		return false;
-	}
-	
-	//Returns the source code of the page after it's been modified by xajax
-	this.viewSource = function()
-	{
-		return "<html>"+document.getElementsByTagName("HTML")[0].innerHTML+"</html>";
-	}
-	
 	//Process XML xajaxResponses returned from the request
-	this.processResponse = function(xml)
+	processResponse: function(xml)
 	{
-		clearTimeout(loadingTimeout);
-		this.doneLoadingFunction();
-		if (xajaxStatusMessages == true) window.status = 'Processing...';
+		clearTimeout(this.delayTimer);
+		if (this.isEventFunction(this.eventFunctions.globalRequestComplete)) {
+			this.eventFunctions.globalRequestComplete();
+		}
+		if (this.isEventFunction(this.callOptions.beforeResponse)) {
+			var eventReturn = this.callOptions.beforeResponse(xml);
+			if (eventReturn == false) {
+				this.completeResponse();
+				return;
+			}
+		}
+		
+		if (xajaxConfig.statusMessages == true) window.status = 'Processing...';
 		var tmpXajax = null;
 		xml = xml.documentElement;
-		if (xml == null)
+		if (xml == null) {
+			this.completeResponse();
 			return;
-		
+		}
+	
 		var skipCommands = 0;
 		for (var i=0; i<xml.childNodes.length; i++)
 		{
@@ -587,7 +646,7 @@ function Xajax()
 				var type;
 				var before;
 				var objElement = null;
-
+				
 				for (var j=0; j<xml.childNodes[i].attributes.length; j++)
 				{
 					if (xml.childNodes[i].attributes[j].name == "n")
@@ -617,7 +676,6 @@ function Xajax()
 				}
 				else if (xml.childNodes[i].firstChild && xml.childNodes[i].firstChild.nodeName == 'xjxobj') {
 					data = this._nodeToObject(xml.childNodes[i].firstChild);
-					objElement = "XJX_SKIP";
 				}
 				else if (xml.childNodes[i].childNodes.length > 1)
 				{
@@ -649,12 +707,13 @@ function Xajax()
 				else
 					data = "";
 				
-				if (objElement != "XJX_SKIP") objElement = this.$(id);
+				
+				if (cmd != "jc") objElement = this.$(id);
 				var cmdFullname;
 				try
 				{
 					if (cmd=="cc") {
-						cmdFullname = "addConfirmCommands";
+						cmdFullname = "confirmCommands";
 						var confirmResult = confirm(data);
 						if (!confirmResult) {
 							skipCommands = id;
@@ -662,17 +721,12 @@ function Xajax()
 					}
 					if (cmd=="al")
 					{
-						cmdFullname = "addAlert";
+						cmdFullname = "alert";
 						alert(data);
-					}
-					else if (cmd=="js")
-					{
-						cmdFullname = "addScript/addRedirect";
-						eval(data);
 					}
 					else if (cmd=="jc")
 					{
-						cmdFullname = "addScriptCall";
+						cmdFullname = "call";
 						var scr = id + '(';
 						if (data[0] != null) {
 							scr += 'data[0]';
@@ -683,14 +737,29 @@ function Xajax()
 						scr += ');';
 						eval(scr);
 					}
+					else if (cmd=="js")
+					{
+						cmdFullname = "script/redirect";
+						eval(data);
+					}
 					else if (cmd=="in")
 					{
-						cmdFullname = "addIncludeScript";
+						cmdFullname = "includeScript";
 						this.include(data);
+					}
+					else if (cmd=="ino")
+					{
+						cmdFullname = "includeScriptOnce";
+						this.includeOnce(data);
+					}
+					else if (cmd=="css")
+					{
+						cmdFullname = "includeCSS";
+						this.addCSS(data);
 					}
 					else if (cmd=="as")
 					{
-						cmdFullname = "addAssign/addClear";
+						cmdFullname = "assign/clear";
 						if (this.willChange(id,property,data))
 						{
 							eval("objElement."+property+"=data;");
@@ -698,52 +767,54 @@ function Xajax()
 					}
 					else if (cmd=="ap")
 					{
-						cmdFullname = "addAppend";
+						cmdFullname = "append";
 						eval("objElement."+property+"+=data;");
 					}
 					else if (cmd=="pp")
 					{
-						cmdFullname = "addPrepend";
+						cmdFullname = "prepend";
 						eval("objElement."+property+"=data+objElement."+property);
 					}
 					else if (cmd=="rp")
 					{
-						cmdFullname = "addReplace";
+						cmdFullname = "replace";
+						search = data['s'];
+						data = data['r'];
 						this.replace(id,property,search,data)
 					}
 					else if (cmd=="rm")
 					{
-						cmdFullname = "addRemove";
+						cmdFullname = "remove";
 						this.remove(id);
 					}
 					else if (cmd=="ce")
 					{
-						cmdFullname = "addCreate";
+						cmdFullname = "create";
 						this.create(id,data,property);
 					}
 					else if (cmd=="ie")
 					{
-						cmdFullname = "addInsert";
+						cmdFullname = "insert";
 						this.insert(id,data,property);
 					}
 					else if (cmd=="ia")
 					{
-						cmdFullname = "addInsertAfter";
+						cmdFullname = "insertAfter";
 						this.insertAfter(id,data,property);
 					}
 					else if (cmd=="ci")
 					{
-						cmdFullname = "addCreateInput";
+						cmdFullname = "createInput";
 						this.createInput(id,type,data,property);
 					}
 					else if (cmd=="ii")
 					{
-						cmdFullname = "addInsertInput";
+						cmdFullname = "insertInput";
 						this.insertInput(id,type,data,property);
 					}
 					else if (cmd=="iia")
 					{
-						cmdFullname = "addInsertInputAfter";
+						cmdFullname = "insertInputAfter";
 						this.insertInputAfter(id,type,data,property);
 					}
 					else if (cmd=="ev")
@@ -759,13 +830,13 @@ function Xajax()
 					}
 					else if (cmd=="rh")
 					{
-						cmdFullname = "addRemoveHandler";
+						cmdFullname = "removeHandler";
 						this.removeHandler(id, property, data);
 					}
 				}
 				catch(e)
 				{
-					if (xajaxDebug)
+					if (xajaxConfig.debug)
 						alert("While trying to '"+cmdFullname+"' (command number "+i+"), the following error occured:\n"
 							+ e.name+": "+e.message+"\n"
 							+ (id&&!objElement?"Object with id='"+id+"' wasn't found.\n":""));
@@ -782,14 +853,94 @@ function Xajax()
 				delete internalData;
 				delete j;
 				delete k;
+				delete l;
 			}	
 		}
 		delete xml;
 		delete i;
+		delete skipCommands;
+		this.completeResponse();
+		if (this.isEventFunction(this.callOptions.onResponse)) {
+			this.callOptions.onResponse();
+		}
+	},
+	
+	completeResponse: function()
+	{
 		document.body.style.cursor = 'default';
-		if (xajaxStatusMessages == true) window.status = 'Done';
+		if (xajaxConfig.statusMessages == true) window.status = 'Done';		
+	},
+	
+	//Gets the text as it would be if it were being retrieved from
+	//the innerHTML property in the current browser
+	getBrowserHTML: function(html)
+	{
+		tmpXajax = document.getElementById(this.workId);
+		if (!tmpXajax)
+		{
+			tmpXajax = document.createElement("div");
+			tmpXajax.setAttribute('id',this.workId);
+			tmpXajax.style.display = "none";
+			tmpXajax.style.visibility = "hidden";
+			document.body.appendChild(tmpXajax);
+		}
+		tmpXajax.innerHTML = html;
+		var browserHTML = tmpXajax.innerHTML;
+		tmpXajax.innerHTML = '';	
+		
+		return browserHTML;
+	},
+	
+	// Tests if the new Data is the same as the extant data
+	willChange: function(element, attribute, newData)
+	{
+		if (!document.body)
+		{
+			return true;
+		}
+		if (attribute == "innerHTML")
+		{
+			newData = this.getBrowserHTML(newData);
+		}
+		elementObject = this.$(element);
+		if (elementObject) {
+			var oldData;		
+			eval("oldData=this.$('"+element+"')."+attribute);
+			if (newData !== oldData)
+				return true;
+		}
+
+		return false;
+	},
+	
+	//Returns the source code of the page after it's been modified by xajax
+	viewSource: function()
+	{
+		return "<html>"+document.getElementsByTagName("HTML")[0].innerHTML+"</html>";
+	},
+	
+	arrayContainsValue: function(array, valueToCheck)
+	{
+		for (i=0; i<array.length;i++) {
+			if (array[i] == valueToCheck) return true;
+		}
+		return false;
 	}
 }
 
-var xajax = new Xajax();
+if (xajaxConfig.legacy) {
+	xajax.advancedCall = xajax.call;
+	xajax.call = function(sFunction, aArgs, sRequestType)
+	{
+		var options = {};
+		if (aArgs != null) {
+			options['parameters'] = aArgs;
+		}
+		if (sRequestType != null) {
+			options['method'] = sRequestType;
+		}
+		xajax.advancedCall(sFunction, options);
+	}
+}
+
 xajaxLoaded = true;

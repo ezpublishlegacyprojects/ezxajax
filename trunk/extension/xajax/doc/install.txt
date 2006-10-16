@@ -47,16 +47,8 @@ non-expiring cache block.
 
 Add a policy for the xajax module to the desired roles.
 
- 5. Enable apply button
-******************************
 
-Eventually you can show the apply button in the class edit interface, so it's easier to
-test certain functionality. Put this in content.ini.append(.php):
-
-[ClassSettings]
-ApplyButton=enabled
-
- 6. Clear caches
+ 5. Clear caches
 ******************************
 
 You will probably need to clear the INI and template caches.
