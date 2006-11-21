@@ -4,6 +4,7 @@
     include_once( 'lib/ezutils/classes/ezsys.php' );
 
     $xajax = new xajax( eZSys::indexDir() . '/xajax/call' );
+    $xajax->setFlag( 'exitAllowed', false );
 
     include_once( 'lib/ezutils/classes/ezextension.php' );
     include_once( 'lib/ezutils/classes/ezini.php' );
@@ -34,8 +35,11 @@
         }
     }
 
-    include_once( 'lib/ezutils/classes/ezexecution.php' );
-    eZExecution::setCleanExit( );
-
     $xajax->processRequest();
+
+    include_once( 'lib/ezutils/classes/ezexecution.php' );
+    eZDB::checkTransactionCounter();
+    eZExecution::cleanup();
+    eZExecution::setCleanExit();
+    exit();
 ?>
