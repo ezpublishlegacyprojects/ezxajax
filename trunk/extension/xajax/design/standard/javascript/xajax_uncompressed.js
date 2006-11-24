@@ -466,6 +466,8 @@ var xajax = {
 	// TODO: add options
 	call: function(sFunction, aOptions)
 	{
+	    alert( sFunction );
+	
 		var i,r,postData;
 		this.setCallOptions(aOptions);
 		if (document.body && xajaxConfig.waitCursor)
