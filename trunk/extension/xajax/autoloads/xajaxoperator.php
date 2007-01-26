@@ -84,43 +84,51 @@ class XajaxOperator
                     $operatorValue = $xajax->getJavascript( $sys->wwwDir() . '/extension/xajax/design/standard/javascript/', $javascriptFile, 'extension/xajax/design/standard/javascript/xajax.js' );
 
                     //js stuff that add progress indicator
-                    $operatorValue.='<script type="text/javascript">
-<!--
-                        function xajax_activityIndicatorInit() {
-                            var b=document.getElementsByTagName("body")[0];
-                            var pImg=new Image();
-                            pImg.src = "' . $this->ezimage( "ajax-activity_indicator.gif" ) . '";
-                            b.appendChild( pImg );
-                            pImg.setAttribute("id", "spinner");
-                            pImg.style.display="none";
-                            pImg.style.position="absolute";
-                            pImg.style.top="50%";
-                            pImg.style.left="50%";
-                            pImg.style.backgroundColor="#CCC";
-                        }
+                    // Since IE6 is not supported we need an ini-flag to handle
+                    if ( $ini->variable( 'Compatibility', 'IE6' ) == 'true' )
+                    {
 
-                        // Only Mozilla currently supported
-                        // For IE support, take a look at http://dean.edwards.name/weblog/2005/09/busted/
-                        if (document.addEventListener) {
-                            document.addEventListener("DOMContentLoaded", xajax_activityIndicatorInit, false );
-                        }
-
-                        xajax.loadingFunction = function(){
-                            screenProp = ezjslib_getScreenProperties();
-                            screenCenterY = screenProp.ScrollY + screenProp.Height/2;
-                            screenCenterX = screenProp.ScrollX + screenProp.Width/2;
-                            pImg = xajax.$("spinner");
-                            pImg.style.top = (screenCenterY - pImg.height/2 ) + "px";
-                            pImg.style.left = ( screenCenterX - pImg.width/2 ) + "px";
-                            pImg.style.display = "inline";
-                        };
-
-                        xajax.doneLoadingFunction = function(){
-                            pImg = xajax.$("spinner");
-                            pImg.style.display = "none";
-                        };
--->
-                        </script>';
+                    }
+                    else
+                    {
+                        $operatorValue.='<script type="text/javascript">
+                            <!--
+                            function xajax_activityIndicatorInit() {
+                                var b=document.getElementsByTagName("body")[0];
+                                var pImg=new Image();
+                                pImg.src = "' . $this->ezimage( "ajax-activity_indicator.gif" ) . '";
+                                b.appendChild( pImg );
+                                pImg.setAttribute("id", "spinner");
+                                pImg.style.display="none";
+                                pImg.style.position="absolute";
+                                pImg.style.top="50%";
+                                pImg.style.left="50%";
+                                pImg.style.backgroundColor="#CCC";
+                            }
+    
+                            // Only Mozilla currently supported
+                            // For IE support, take a look at http://dean.edwards.name/weblog/2005/09/busted/
+                            if (document.addEventListener) {
+                                document.addEventListener("DOMContentLoaded", xajax_activityIndicatorInit, false );
+                            }
+    
+                            xajax.loadingFunction = function(){
+                                screenProp = ezjslib_getScreenProperties();
+                                screenCenterY = screenProp.ScrollY + screenProp.Height/2;
+                                screenCenterX = screenProp.ScrollX + screenProp.Width/2;
+                                pImg = xajax.$("spinner");
+                                pImg.style.top = (screenCenterY - pImg.height/2 ) + "px";
+                                pImg.style.left = ( screenCenterX - pImg.width/2 ) + "px";
+                                pImg.style.display = "inline";
+                            };
+    
+                            xajax.doneLoadingFunction = function(){
+                                pImg = xajax.$("spinner");
+                                pImg.style.display = "none";
+                            };
+                            -->
+                            </script>';
+                    }
                 }break;
             default:
                 {
