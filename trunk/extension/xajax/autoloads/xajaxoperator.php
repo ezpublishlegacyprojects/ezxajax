@@ -85,7 +85,7 @@ class XajaxOperator
                     include_once( 'lib/ezutils/classes/ezsys.php' );
                     $sys =& eZSys::instance();
                     $operatorValue = $xajax->getJavascript( $sys->wwwDir() . '/extension/xajax/design/standard/javascript/' );
-
+/*
                     //js stuff that add progress indicator
                     // Since IE6 is not supported we need an ini-flag to handle
                     if ( $ini->variable( 'Compatibility', 'IE6' ) == 'true' )
@@ -131,7 +131,12 @@ class XajaxOperator
                             };
                             -->
                             </script>';
-                    }
+		    }
+ */
+		    $operatorValue.="<div id='loadingBar' style='display:none;z-index:100000;position:absolute;width:100%;height:100%;background:no-repeat url(".$this->ezimage( "ajax-activity_indicator.gif" ) .") 50% 50%;text-indent:-1000em;'>Loading...</div>".
+		    		      "\n<script type='text/javascript'>xajax.callback.global.onRequest= function(){xajax.$('loadingBar').style.display='block';};".
+                      "\nxajax.callback.global.onComplete = function(){xajax.$('loadingBar').style.display='none';}". 
+		      "</script>";
                 }break;
             default:
                 {
