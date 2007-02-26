@@ -125,7 +125,12 @@ class XajaxOperator
                                 pImg.style.display = "inline";
                             };
 
-                            xajax.callback.global.onComplete = function(){
+                            xajax.callback.global.onSuccess = function(){
+                                pImg = xajax.$("spinner");
+                                pImg.style.display = "none";
+                            };
+
+                            xajax.callback.global.onFailure = function(){
                                 pImg = xajax.$("spinner");
                                 pImg.style.display = "none";
                             };
