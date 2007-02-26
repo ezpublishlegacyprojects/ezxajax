@@ -2,3 +2,6 @@
 
 [TemplateSettings]
 ExtensionAutoloadPath[]=xajax
+
+[RoleSettings]
+PolicyOmitList[]=xajax
