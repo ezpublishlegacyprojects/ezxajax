@@ -115,7 +115,7 @@ class XajaxOperator
                                 document.addEventListener("DOMContentLoaded", xajax_activityIndicatorInit, false );
                             }
 
-                            xajax.callback.global.onRequest = function(){
+                            xajax.callback.global.onResponseDelay = function(){
                                 screenProp = ezjslib_getScreenProperties();
                                 screenCenterY = screenProp.ScrollY + screenProp.Height/2;
                                 screenCenterX = screenProp.ScrollX + screenProp.Width/2;
@@ -125,12 +125,7 @@ class XajaxOperator
                                 pImg.style.display = "inline";
                             };
 
-                            xajax.callback.global.onSuccess = function(){
-                                pImg = xajax.$("spinner");
-                                pImg.style.display = "none";
-                            };
-
-                            xajax.callback.global.onFailure = function(){
+                            xajax.callback.global.beforeResponseProcessing = function(){
                                 pImg = xajax.$("spinner");
                                 pImg.style.display = "none";
                             };
