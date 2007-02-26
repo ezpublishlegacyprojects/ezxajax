@@ -3,8 +3,8 @@
 function sayHelloWorld()
 {
     $objResponse = new xajaxResponse();
-    $objResponse->addAlert( 'Hello world!' );
-    return $objResponse->getXML();
+    $objResponse->alert( 'Hello world!' );
+    return $objResponse;
 }
 
 ?>
