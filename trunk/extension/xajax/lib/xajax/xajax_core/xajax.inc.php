@@ -2,8 +2,8 @@
 /**
  * xajax.inc.php :: Main xajax class and setup file
  *
- * xajax version 0.5 (Beta 1)
- * copyright (c) 2005 by Jared White & J. Max Wilson
+ * xajax version 0.5 (Beta 2)
+ * copyright (c) 2005-2006 by Jared White & J. Max Wilson
  * http://www.xajaxproject.org
  *
  * xajax is an open source PHP class library for easily creating powerful
@@ -15,7 +15,7 @@
  * http://www.xajaxproject.org/bsd_license.txt
  * 
  * @package xajax
- * @version $Id: xajax.inc.php 262 2006-10-07 21:32:06Z jmaxwilson $
+ * @version $Id: xajax.inc.php 318 2007-01-30 19:38:55Z gaeldesign $
  * @copyright Copyright (c) 2005-2006 by Jared White & J. Max Wilson
  * @license http://www.xajaxproject.org/bsd_license.txt BSD License
  */
@@ -100,6 +100,10 @@ class xajax
 	 */
 	var $bDebug;
 	/**
+	 * @var boolean Use the uncompressed versions of the Javascript
+	 */
+	var $bUseUncompressedScripts;
+	/**
 	 * @var boolean Show messages in the client browser's status bar (default false)
 	 */
 	var $bStatusMessages;    
@@ -156,48 +160,49 @@ class xajax
 	 * 
 	 * @param string  optional request URI; defaults to the current browser URI
 	 */
-	function xajax($sRequestURI="")
+	function xajax($sRequestURI='')
 	{
 		$this->aFunctions = array();
 		$this->aCallableObjects = array();
 		$this->aEvents = array(
-			"beforeProcessing" => array(),
-			"afterProcessing" => array(),
-			"onMissingFunction" => array(),
-			"onProcessingError" => array()
+			'beforeProcessing' => array(),
+			'afterProcessing' => array(),
+			'onMissingFunction' => array(),
+			'onProcessingError' => array()
 		);
 		$this->sRequestURI = $sRequestURI;
-		if ($this->sRequestURI == "")
+		if ($this->sRequestURI == '')
 			$this->sRequestURI = $this->_detectURI();
-		$this->sWrapperPrefix = "xajax_";
+		$this->sWrapperPrefix = 'xajax_';
 		$this->setFlags(array(
-			"debug" => false,
-			"statusMessages" => false,
-			"waitCursor" => true,
-			"exitAllowed" => true,
-			"errorHandler" => false,
-			"cleanBuffer" => false,
-			"decodeUTF8Input" => false,
-			"outputEntities" => false,
-			"allowBlankResponse" => false,
-			"allowAllResponseTypes" => false));
+			'debug' => false,
+			'useUncompressedScripts' => false,
+			'statusMessages' => false,
+			'waitCursor' => true,
+			'exitAllowed' => true,
+			'errorHandler' => false,
+			'cleanBuffer' => false,
+			'decodeUTF8Input' => false,
+			'outputEntities' => false,
+			'allowBlankResponse' => false,
+			'allowAllResponseTypes' => false));
 		$this->sLogFile = "";
 		$this->setCharEncoding(XAJAX_DEFAULT_CHAR_ENCODING);
 		$this->iTimeout = 6000;
 		
 		// Setup plugin manager
 		$oPluginManager =& xajaxPluginManager::getInstance();
-		$sMandatoryPluginFolder = dirname(__FILE__) . "/plugin_layer";
+		$sMandatoryPluginFolder = dirname(__FILE__) . '/plugin_layer';
 		$oPluginManager->addPluginFolder($sMandatoryPluginFolder);
 
-		$sOptionalPluginFolder = dirname(dirname(__FILE__))."/xajax_plugins";
+		$sOptionalPluginFolder = dirname(dirname(__FILE__)) . '/xajax_plugins';
 		if ($oPluginManager->addPluginFolder($sOptionalPluginFolder)) {
 			// TODO...load plugins?
 		}
 		
-		$oPluginManager->loadPluginFile("xajaxDefaultRequestProcessorPlugin");
+		$oPluginManager->loadPluginFile('xajaxDefaultRequestProcessorPlugin');
 		$oPluginManager->registerRequestProcessorPlugin(new xajaxDefaultRequestProcessorPlugin());			
-		$oPluginManager->loadPluginFile("xajaxDefaultIncludePlugin");
+		$oPluginManager->loadPluginFile('xajaxDefaultIncludePlugin');
 		$oPluginManager->registerIncludePlugin(new xajaxDefaultIncludePlugin());			
 	}
 	
@@ -224,7 +229,7 @@ class xajax
 	 */
 	function getVersion()
 	{
-		return 'xajax 0.5 Beta 1';
+		return 'xajax 0.5 Beta 2';
 	}
 	
 	/**
@@ -262,7 +267,7 @@ class xajax
 	 */
 	function setFlag($name, $value)
 	{
-		$sVar = "b" . ucfirst($name);
+		$sVar = 'b' . ucfirst($name);
 		if (array_key_exists($sVar, get_object_vars($this))) {
 			$this->$sVar = (boolean)$value;
 		}
@@ -278,7 +283,7 @@ class xajax
 	 */
 	function getFlag($name)
 	{
-		$sVar = "b" . ucfirst($name);
+		$sVar = 'b' . ucfirst($name);
 		if (array_key_exists($sVar, get_object_vars($this))) {
 			return $this->$sVar;
 		}
@@ -420,19 +425,19 @@ class xajax
 	function registerFunction($mFunction,$sIncludeFile=null)
 	{
 		if (is_array($mFunction)) {
-			$this->aFunctions[$mFunction[0]] = array("callback" => array_slice($mFunction, 1));
+			$this->aFunctions[$mFunction[0]] = array('callback' => array_slice($mFunction, 1));
 		}	
 		else {
-			$this->aFunctions[$mFunction] = array("callback" => $mFunction);
+			$this->aFunctions[$mFunction] = array('callback' => $mFunction);
 		}
 		
 		if ($sIncludeFile)
 		{		
 			if (is_array($mFunction)) {
-				$this->aFunctions[$mFunction[0]]["include"] = $sIncludeFile;
+				$this->aFunctions[$mFunction[0]]['include'] = $sIncludeFile;
 			}
 			else {
-				$this->aFunctions[$mFunction]["include"] = $sIncludeFile;
+				$this->aFunctions[$mFunction]['include'] = $sIncludeFile;
 			}
 		}
 	}
@@ -574,17 +579,18 @@ class xajax
 	 *               "http://www.myserver.com/anotherfolder", then $sJsURI
 	 *               should be set to "../anotherfolder". Defaults to assuming
 	 *               xajax is in the same folder as your PHP file.
-	 * @param string the relative folder/file pair of the xajax Javascript
-	 *               engine located within the xajax installation folder.
-	 *               Defaults to xajax_js/xajax.js.
+	 * @param array  an array of arrays. Each sub-array should contain two
+	 *               script elements: the relative folder/file pair of the
+	 *               Javascript engine component (e.g. "xajax_js/xajax_debug.js"),
+	 *               and the name of the component (e.g. "xajax.debug"). Optional
 	 */
-	function printJavascript($sJsURI="", $sJsFile=NULL)
+	function printJavascript($sJsURI="", $aJsFiles=array())
 	{
 		$objPluginManager =& xajaxPluginManager::getInstance();
 		$objInclude = $objPluginManager->getIncludePlugin();
 		$objInclude->setXajax($this);
 		$objInclude->setFunctions($this->aFunctions);
-		print $objInclude->getJavascript($sJsURI, $sJsFile);
+		print $objInclude->getJavascript($sJsURI, $aJsFiles);
 	}
 	
 	/**
@@ -607,18 +613,19 @@ class xajax
 	 *               "http://www.myserver.com/anotherfolder", then $sJsURI
 	 *               should be set to "../anotherfolder". Defaults to assuming
 	 *               xajax is in the same folder as your PHP file.
-	 * @param string the relative folder/file pair of the xajax Javascript
-	 *               engine located within the xajax installation folder.
-	 *               Defaults to xajax_js/xajax.js.
+	 * @param array  an array of arrays. Each sub-array should contain two
+	 *               script elements: the relative folder/file pair of the
+	 *               Javascript engine component (e.g. "xajax_js/xajax_debug.js"),
+	 *               and the name of the component (e.g. "xajax.debug"). Optional
 	 * @return string
 	 */
-	function getJavascript($sJsURI="", $sJsFile=NULL)
+	function getJavascript($sJsURI='', $aJsFiles=array())
 	{	
 		$objPluginManager =& xajaxPluginManager::getInstance();
 		$objInclude = $objPluginManager->getIncludePlugin();
 		$objInclude->setXajax($this);
 		$objInclude->setFunctions($this->aFunctions);
-		return $objInclude->getJavascript($sJsURI, $sJsFile);
+		return $objInclude->getJavascript($sJsURI, $aJsFiles);
 	}
 	
 	/**
@@ -650,18 +657,19 @@ class xajax
 	 *               "http://www.myserver.com/anotherfolder", then $sJsURI
 	 *               should be set to "../anotherfolder". Defaults to assuming
 	 *               xajax is in the same folder as your PHP file.
-	 * @param string the relative folder/file pair of the xajax Javascript
-	 *               engine located within the xajax installation folder.
-	 *               Defaults to xajax_js/xajax.js.
+	 * @param array  an array of arrays. Each sub-array should contain two
+	 *               script elements: the relative folder/file pair of the
+	 *               Javascript engine component (e.g. "xajax_js/xajax_debug.js"),
+	 *               and the name of the component (e.g. "xajax.debug"). Optional
 	 * @return string
 	 */
-	function getJavascriptInclude($sJsURI="", $sJsFile=NULL)
+	function getJavascriptInclude($sJsURI='', $aJsFiles=array())
 	{
 		$objPluginManager =& xajaxPluginManager::getInstance();
 		$objInclude = $objPluginManager->getIncludePlugin();
 		$objInclude->setXajax($this);
 		$objInclude->setFunctions($this->aFunctions);
-		return $objInclude->getJavascriptInclude($sJsURI, $sJsFile);
+		return $objInclude->getJavascriptInclude($sJsURI, $aJsFiles);
 	}
 
 	/**
@@ -672,30 +680,30 @@ class xajax
 	 * @param string an optional argument containing the full server file path
 	 *               of xajax.js.
 	 */
-	function autoCompressJavascript($sJsFullFilename=NULL)
+	function autoCompressJavascript($sJsFullFilename=NULL, $bAlways=false)
 	{	
-		$sJsFile = "xajax_js/xajax.js";
+		$sJsFile = 'xajax_js/xajax_core.js';
 		
 		if ($sJsFullFilename) {
 			$realJsFile = $sJsFullFilename;
 		}
 		else {
 			$realPath = realpath(dirname(dirname(__FILE__)));
-			$realJsFile = $realPath . "/". $sJsFile;
+			$realJsFile = $realPath . '/'. $sJsFile;
 		}
 
 		// Create a compressed file if necessary
-		if (!file_exists($realJsFile)) {
-			$srcFile = str_replace(".js", "_uncompressed.js", $realJsFile);
+		if (!file_exists($realJsFile) || true == $bAlways) {
+			$srcFile = str_replace('.js', '_uncompressed.js', $realJsFile);
 			if (!file_exists($srcFile)) {
-				trigger_error("The xajax uncompressed Javascript file could not be found in the <b>" . dirname($realJsFile) . "</b> folder. Error ", E_USER_ERROR);	
+				trigger_error('The xajax uncompressed Javascript file could not be found in the <b>' . dirname($realJsFile) . '</b> folder. Error ', E_USER_ERROR);	
 			}
-			require(dirname(__FILE__)."/xajaxCompress.inc.php");
+			require_once(dirname(__FILE__) . '/xajaxCompress.inc.php');
 			$javaScript = implode('', file($srcFile));
 			$compressedScript = xajaxCompressJavascript($javaScript);
-			$fH = @fopen($realJsFile, "w");
+			$fH = @fopen($realJsFile, 'w');
 			if (!$fH) {
-				trigger_error("The xajax compressed javascript file could not be written in the <b>" . dirname($realJsFile) . "</b> folder. Error ", E_USER_ERROR);
+				trigger_error('The xajax compressed javascript file could not be written in the <b>' . dirname($realJsFile) . '</b> folder. Error ', E_USER_ERROR);
 			}
 			else {
 				fwrite($fH, $compressedScript);
@@ -715,6 +723,7 @@ class xajax
 
 		// Try to get the request URL
 		if (!empty($_SERVER['REQUEST_URI'])) {
+			$_SERVER['REQUEST_URI'] = str_replace(array('"',"'",'<','>'), array('%22','%27','%3C','%3E'), $_SERVER['REQUEST_URI']);
 			$aURL = parse_url($_SERVER['REQUEST_URI']);
 		}
 
@@ -759,7 +768,7 @@ class xajax
 			} else {
 				$sPath = parse_url($_SERVER['PHP_SELF']);
 			}
-			$aURL['path'] = $sPath['path'];
+			$aURL['path'] = str_replace(array('"',"'",'<','>'), array('%22','%27','%3C','%3E'), $sPath['path']);
 			unset($sPath);
 		}
 
@@ -805,27 +814,26 @@ function xajaxErrorHandler($errno, $errstr, $errfile, $errline)
 	if (($errno & $errorReporting) == 0) return;
 	
 	if ($errno == E_NOTICE) {
-		$errTypeStr = "NOTICE";
+		$errTypeStr = 'NOTICE';
 	}
 	else if ($errno == E_WARNING) {
-		$errTypeStr = "WARNING";
+		$errTypeStr = 'WARNING';
 	}
 	else if ($errno == E_USER_NOTICE) {
-		$errTypeStr = "USER NOTICE";
+		$errTypeStr = 'USER NOTICE';
 	}
 	else if ($errno == E_USER_WARNING) {
-		$errTypeStr = "USER WARNING";
+		$errTypeStr = 'USER WARNING';
 	}
 	else if ($errno == E_USER_ERROR) {
-		$errTypeStr = "USER FATAL ERROR";
+		$errTypeStr = 'USER FATAL ERROR';
 	}
 	else if (defined('E_STRICT') && $errno == E_STRICT) {
 		return;
 	}
 	else {
-		$errTypeStr = "UNKNOWN: $errno";
+		$errTypeStr = 'UNKNOWN: ' . $errno;
 	}
 	$GLOBALS['xajaxErrorHandlerText'] .= "\n----\n[$errTypeStr] $errstr\nerror in line $errline of file $errfile";
 }
 
-?>

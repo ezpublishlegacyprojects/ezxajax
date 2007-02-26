@@ -2,41 +2,46 @@
  xajax PHP & Javascript Library
  The easiest way to develop powerful Ajax applications with PHP
 
- Version 0.5 (Beta 1)
+ Version 0.5 (Beta 2)
  README Text File
+ January 26, 2007
 
  ------------------------------------------------------
- | Release Notes:                                     |
+ | ** Release Notes:                                  |
  | See release_notes.txt in this download archive     |
  |                                                    |
- | Lead Developers:                                   |
+ | ** Project Managers:                               |
  | Jared White (jared@intuitivefuture.com)            |
  | J. Max Wilson (jmaxwilson@users.sourceforge.net)   |
+ |                                                    |
+ | ** Developers:                                     |
  | Eion Robb (eion@bigfoot.com)                       |
+ | Joseph Woolley (joe@calledtoconstruct.net)         | 
  ------------------------------------------------------
 ===============================================================================
 
- :: To find out what's changed since the 0.2.4 release of xajax, ::
- :: view the Release Notes in the file listed above.             ::
+ :: To find out what's changed since the 0.5 Beta 1 release of xajax, ::
+ :: view the Release Notes in the file listed above.                  ::
 
+The Beta 2 release of xajax 0.5 is a big step forward for the project, thanks
+to a major contribution of a brand-new Javascript engine by our new developer
+Joseph Woolley (CtC). It took us a while to refine the design and ensure
+compatibility with all of the various xajax features we needed to implement,
+but we think you'll agree it was worth the wait.
 
-** THIS IS AN EARLY BETA RELEASE OF 0.5 **
+Beta 2 marks the beginning of stabilization of the 0.5 API on both the PHP and
+Javascript side. Any changes we make from here on out leading up to the final
+0.5 release will be small, unless there is an overwhelming and widely
+recognized reason for a large modification. Basically, you can start to design
+and test applications using 0.5 Beta 2 with a reasonable degree of confidence.
 
-We're very excited about this initial beta release of 0.5, but please be aware
-that (a) there are absolutely no guarantees we won't change all kinds of things
-before the final 0.5 release, and (b) it's possible that this version will
-break your PHP apps and maybe not even work on your server. That's why this
-is a beta. :)
+We're working hard to bring the documentation up to snuff with the new Beta.
+In the meantime, we encourage you to visit our forums at
+http://community.xajaxproject.com and ask for help and give us your feedback.
+You can also report bugs you find at http://www.sourceforge.net/projects/xajax
+using our bug tracker.
 
-The rest of this readme is the same as the 0.2.4 readme, which means some of
-its information is incorrect now with the 0.5 changes. Please read the release
-notes in release_notes.txt to see what's new.
-
-Thank you for testing out 0.5 Beta 1! Please visit our forums at
-http://community.xajaxproject.com and give us your feedback. You can also
-report bugs you find at http://www.sourceforge.net/projects/xajax using our bug
-tracker.
-
+Thank you for trying out xajax 0.5 Beta 2! We hope you like it!
 
 ____________________________________________________________________
 
@@ -57,9 +62,9 @@ between the browser and the server, and it can also be used as a
 Javascript library directly to simplify certain DOM and event
 manipulations. However, you can definitely choose to use a
 dedicated Javascript "engine" of your liking and integrate it with
-xajax's client/server communication features in a number of ways.
-More tightly-coupled integration will be forthcoming in a future
-version of xajax.
+xajax's client/server communication features. Since xajax is moving
+towards a highly modular, plugin-based system, you can alter and extend
+its behavior in a number of ways.
 
 2. For More Information
 
@@ -92,13 +97,14 @@ site folder. Or if you wish, you can put all of the files in a
 dedicated "xajax" folder on your Web server (make sure that you
 know what that URL is relative your site pages so you can provide
 xajax with the correct installed folder URL). Note that the
-
 "thewall" folder in the "examples" folder needs to be writable by
-
 the Web server for that example to function.
 
-Within the main xajax folder there are two folders: "examples"
-and "tests". You should be able to view these PHP pages from your
+Within the main xajax folder there are four folders: "examples",
+"tests", "xajax_js", and "xajax_core". Only "xajax_js" and
+"xajax_core" are required to use xajax.
+
+You should be able to view the PHP pages in "tests" from your
 Web browser and see xajax working in action. If you can view the
 pages but the AJAX calls are not working, there may be something
 wrong with your server setup or perhaps your browser is not
@@ -106,6 +112,9 @@ supported or configured correctly. If worst comes to worst, post
 a message in our forums and someone may be able to help you.
 
 4. Documentation
+
+** NOTE: out-of-date docs will be updated for Beta 2 over the
+coming days! **
 
 Detailed documentation for the xajax PHP classes is available on
 our wiki (URL listed above in section 2), and more is on the way
@@ -117,10 +126,10 @@ the better the answers will be).
 
 5. Contributing to xajax
 
-xajax is released under the LGPL open source license. If you wish
+xajax is released under the BSD open source license. If you wish
 to contribute to the project or suggest new features, introduce
-yourself on the forums or you can e-mail the lead developers at
-the addresses listed at the top of this README.
+yourself on the forums or you can e-mail the project managers
+and developers at the addresses listed at the top of this README.
 
 6. Good luck and enjoy!
 

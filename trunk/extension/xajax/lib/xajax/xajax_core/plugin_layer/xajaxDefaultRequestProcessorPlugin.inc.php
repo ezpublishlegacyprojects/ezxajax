@@ -3,7 +3,7 @@
  * xajaxDefaultRequestProcessorPlugin.inc.php :: xajax default request
  *  processor plugin
  *
- * xajax version 0.5 (Beta 1)
+ * xajax version 0.5 (Beta 2)
  * copyright (c) 2006 by Jared White & J. Max Wilson
  * http://www.xajaxproject.org
  *
@@ -16,7 +16,7 @@
  * http://www.xajaxproject.org/bsd_license.txt
  * 
  * @package xajax
- * @version $Id: xajaxDefaultRequestProcessorPlugin.inc.php 266 2006-10-12 16:07:34Z jmaxwilson $
+ * @version $Id: xajaxDefaultRequestProcessorPlugin.inc.php 317 2007-01-30 19:36:39Z gaeldesign $
  * @copyright Copyright (c) 2005-2006 by Jared White & J. Max Wilson
  * @license http://www.xajaxproject.org/bsd_license.txt BSD License
  */
@@ -279,10 +279,12 @@ class xajaxDefaultRequestProcessorPlugin extends xajaxRequestProcessorPlugin
 			else if (stristr($aArgs[$i],"<xjxquery>") != false)
 			{
 				$aArgs[$i] = $this->_xmlToArray("xjxquery",$aArgs[$i]);	
-			}
-			else if ($this->_objXajax->getFlag("decodeUTF8Input"))
-			{
-				$aArgs[$i] = $this->_decodeUTF8Data($aArgs[$i]);	
+			} else {
+				if ($this->_objXajax->getFlag("decodeUTF8Input"))
+				{
+					$aArgs[$i] = $this->_decodeUTF8Data($aArgs[$i]);	
+				}
+				$aArgs[$i] = str_replace(array('<![CDATA[', ']]>'), '', $aArgs[$i]);
 			}
 		}
 		return $aArgs;
@@ -357,6 +359,7 @@ class xajaxDefaultRequestProcessorPlugin extends xajaxRequestProcessorPlugin
 							{
 								$key = $this->_decodeUTF8Data($key);
 							}
+							$key = str_replace(array('<![CDATA[', ']]>'), '', $key);
 						}
 						if(stristr($this->aObjArray[$this->iPos],"<v>"))
 						{
@@ -375,15 +378,13 @@ class xajaxDefaultRequestProcessorPlugin extends xajaxRequestProcessorPlugin
 									{
 										$value = $this->_decodeUTF8Data($value);
 									}
+									$value = str_replace(array('<![CDATA[', ']]>'), '', $value);
 								}
 								$this->iPos++;
 							}
 						}
 						$this->iPos++;
 					}
-					//decode the CDATA stuff
-					$key = str_replace(array('<![CDATA[', ']]>'), '', $key);
-					$value = str_replace(array('<![CDATA[', ']]>'), '', $value);
 					$aArray[$key]=$value;
 				}
 			}
@@ -405,6 +406,14 @@ class xajaxDefaultRequestProcessorPlugin extends xajaxRequestProcessorPlugin
 			}
 			
 			parse_str($sQuery, $aArray);
+
+// Note by Jared: below code caused bug...can we remove this block?			
+/*			foreach($aArray as $sKey => $sValue)
+			{
+				$aArray[$sKey] = urldecode($sValue);
+			}
+*/
+
 			if ($this->_objXajax->getFlag("decodeUTF8Input"))
 			{
 				foreach($aArray as $key => $value)
@@ -412,6 +421,7 @@ class xajaxDefaultRequestProcessorPlugin extends xajaxRequestProcessorPlugin
 					$aArray[$key] = $this->_decodeUTF8Data($value);
 				}
 			}
+			
 			// If magic quotes is on, then we need to strip the slashes from the
 			// array values because of the parse_str pass which adds slashes
 			if (get_magic_quotes_gpc() == 1) {
@@ -423,6 +433,11 @@ class xajaxDefaultRequestProcessorPlugin extends xajaxRequestProcessorPlugin
 						$newArray[$sKey] = $sValue;
 				}
 				$aArray = $newArray;
+			}
+			
+			foreach ($aArray as $key => $value)
+			{
+				$aArray[$key] = str_replace(array('<![CDATA[', ']]>'), '', $value);
 			}
 		}
 		

@@ -2,7 +2,7 @@
 /**
  * xajaxResponse.inc.php :: xajax XML response class
  *
- * xajax version 0.5 (Beta 1)
+ * xajax version 0.5 (Beta 2)
  * copyright (c) 2006 by Jared White & J. Max Wilson
  * http://www.xajaxproject.org
  *
@@ -15,7 +15,7 @@
  * http://www.xajaxproject.org/bsd_license.txt
  * 
  * @package xajax
- * @version $Id: xajaxResponse.inc.php 265 2006-10-12 01:52:53Z jmaxwilson $
+ * @version $Id: xajaxResponse.inc.php 298 2006-11-28 13:11:39Z calltoconstruct $
  * @copyright Copyright (c) 2005-2006 by Jared White & J. Max Wilson
  * @license http://www.xajaxproject.org/bsd_license.txt BSD License
  */
@@ -69,6 +69,12 @@ class xajaxResponse
 	 *              entities
 	 */
 	var $bOutputEntities;
+	
+	/**
+	 * @var (string || array) the value to be passed back as part of the
+	 * response (if used... only valid for synchronous calls)
+	 */
+	var $returnValue;
 
 	/**#@-*/
 	
@@ -166,7 +172,7 @@ class xajaxResponse
 	 */
 	function confirmCommands($iCmdNumber, $sMessage)
 	{
-	    $this->addCommand(array("n"=>"cc","t"=>$iCmdNumber),$sMessage);
+	    $this->addCommand(array('n'=>'cc','t'=>$iCmdNumber),$sMessage);
 	    return $this;
 	}
 	
@@ -182,7 +188,7 @@ class xajaxResponse
 	 */
 	function assign($sTarget,$sAttribute,$sData)
 	{
-		$this->addCommand(array("n"=>"as","t"=>$sTarget,"p"=>$sAttribute),$sData);
+		$this->addCommand(array('n'=>'as','t'=>$sTarget,'p'=>$sAttribute),$sData);
 		return $this;
 	}
 	
@@ -198,7 +204,7 @@ class xajaxResponse
 	 */
 	function append($sTarget,$sAttribute,$sData)
 	{	
-		$this->addCommand(array("n"=>"ap","t"=>$sTarget,"p"=>$sAttribute),$sData);
+		$this->addCommand(array('n'=>'ap','t'=>$sTarget,'p'=>$sAttribute),$sData);
 		return $this;
 	}
 	
@@ -215,7 +221,7 @@ class xajaxResponse
 	 */
 	 function prepend($sTarget,$sAttribute,$sData)
 	{
-		$this->addCommand(array("n"=>"pp","t"=>$sTarget,"p"=>$sAttribute),$sData);
+		$this->addCommand(array('n'=>'pp','t'=>$sTarget,'p'=>$sAttribute),$sData);
 		return $this;
 	}
 	
@@ -235,7 +241,7 @@ class xajaxResponse
 	{
 		$aData[] = array('k'=>'s','v'=>$sSearch);
 		$aData[] = array('k'=>'r','v'=>$sData);
-		$this->addCommand(array("n"=>"rp","t"=>$sTarget,"p"=>$sAttribute),$aData);
+		$this->addCommand(array('n'=>'rp','t'=>$sTarget,'p'=>$sAttribute),$aData);
 		return $this;
 	}
 	
@@ -263,7 +269,7 @@ class xajaxResponse
 	 */
 	function alert($sMsg)
 	{
-		$this->addCommand(array("n"=>"al"),$sMsg);
+		$this->addCommand(array('n'=>'al'),$sMsg);
 		return $this;
 	}
 	
@@ -324,7 +330,7 @@ class xajaxResponse
 	 */
 	function script($sJS)
 	{
-		$this->addCommand(array("n"=>"js"),$sJS);
+		$this->addCommand(array('n'=>'js'),$sJS);
 		return $this;
 	}
 	
@@ -340,7 +346,7 @@ class xajaxResponse
 	    $aArgs = func_get_args();
 	    $sFunc = array_shift($aArgs);
 	    $aData = $this->_buildObj($aArgs);
-	    $this->addCommand(array("n"=>"jc","t"=>$sFunc),$aData);
+	    $this->addCommand(array('n'=>'jc','f'=>$sFunc),$aData);
 	    return $this;
 	}
 	
@@ -353,7 +359,7 @@ class xajaxResponse
 	 */
 	function remove($sTarget)
 	{
-		$this->addCommand(array("n"=>"rm","t"=>$sTarget),'');
+		$this->addCommand(array('n'=>'rm','t'=>$sTarget),'');
 		return $this;
 	}
 	
@@ -368,14 +374,14 @@ class xajaxResponse
 	 * @param string the id to be assigned to the new element
 	 * @param string deprecated, use the addCreateInput() method instead
 	 */
-	function create($sParent, $sTag, $sId, $sType="")
+	function create($sParent, $sTag, $sId, $sType='')
 	{
 		if ($sType)
 		{
 			trigger_error("The \$sType parameter of addCreate has been deprecated.  Use the addCreateInput() method instead.", E_USER_WARNING);
 			return;
 		}
-		$this->addCommand(array("n"=>"ce","t"=>$sParent,"p"=>$sId),$sTag);
+		$this->addCommand(array('n'=>'ce','t'=>$sParent,'p'=>$sId),$sTag);
 		return $this;
 	}
 	
@@ -391,7 +397,7 @@ class xajaxResponse
 	 */
 	function insert($sBefore, $sTag, $sId)
 	{
-		$this->addCommand(array("n"=>"ie","t"=>$sBefore,"p"=>$sId),$sTag);
+		$this->addCommand(array('n'=>'ie','t'=>$sBefore,'p'=>$sId),$sTag);
 		return $this;
 	}
 
@@ -407,7 +413,7 @@ class xajaxResponse
 	 */
 	function insertAfter($sAfter, $sTag, $sId)
 	{
-		$this->addCommand(array("n"=>"ia","t"=>$sAfter,"p"=>$sId),$sTag);
+		$this->addCommand(array('n'=>'ia','t'=>$sAfter,'p'=>$sId),$sTag);
 		return $this;
 	}
 	
@@ -426,7 +432,7 @@ class xajaxResponse
 	 */
 	function createInput($sParent, $sType, $sName, $sId)
 	{
-		$this->addCommand(array("n"=>"ci","t"=>$sParent,"p"=>$sId,"c"=>$sType),$sName);
+		$this->addCommand(array('n'=>'ci','t'=>$sParent,'p'=>$sId,'c'=>$sType),$sName);
 		return $this;
 	}
 	
@@ -445,7 +451,7 @@ class xajaxResponse
 	 */
 	function insertInput($sBefore, $sType, $sName, $sId)
 	{
-		$this->addCommand(array("n"=>"ii","t"=>$sBefore,"p"=>$sId,"c"=>$sType),$sName);
+		$this->addCommand(array('n'=>'ii','t'=>$sBefore,'p'=>$sId,'c'=>$sType),$sName);
 		return $this;
 	}
 	
@@ -464,7 +470,7 @@ class xajaxResponse
 	 */
 	function insertInputAfter($sAfter, $sType, $sName, $sId)
 	{
-	    $this->addCommand(array("n"=>"iia","t"=>$sAfter,"p"=>$sId,"c"=>$sType),$sName);
+	    $this->addCommand(array('n'=>'iia','t'=>$sAfter,'p'=>$sId,'c'=>$sType),$sName);
 	    return $this;
 	}
 	
@@ -479,7 +485,7 @@ class xajaxResponse
 	 */
 	function addEvent($sTarget,$sEvent,$sScript)
 	{
-		$this->addCommand(array("n"=>"ev","t"=>$sTarget,"p"=>$sEvent),$sScript);
+		$this->addCommand(array('n'=>'ev','t'=>$sTarget,'p'=>$sEvent),$sScript);
 		return $this;
 	}
 	
@@ -495,7 +501,7 @@ class xajaxResponse
 	 */
 	function addHandler($sTarget,$sEvent,$sHandler)
 	{	
-		$this->addCommand(array("n"=>"ah","t"=>$sTarget,"p"=>$sEvent),$sHandler);
+		$this->addCommand(array('n'=>'ah','t'=>$sTarget,'p'=>$sEvent),$sHandler);
 		return $this;
 	}
 	
@@ -512,7 +518,7 @@ class xajaxResponse
 	 */
 	function removeHandler($sTarget,$sEvent,$sHandler)
 	{	
-		$this->addCommand(array("n"=>"rh","t"=>$sTarget,"p"=>$sEvent),$sHandler);
+		$this->addCommand(array('n'=>'rh','t'=>$sTarget,'p'=>$sEvent),$sHandler);
 		return $this;
 	}
 	
@@ -525,7 +531,7 @@ class xajaxResponse
 	 */
 	function includeScript($sFileName)
 	{
-		$this->addCommand(array("n"=>"in"),$sFileName);
+		$this->addCommand(array('n'=>'in'),$sFileName);
 		return $this;
 	}
 	
@@ -538,7 +544,21 @@ class xajaxResponse
 	 */
 	function includeScriptOnce($sFileName)
 	{
-		$this->addCommand(array("n"=>"ino"),$sFileName);
+		$this->addCommand(array('n'=>'ino'),$sFileName);
+		return $this;
+	}
+	
+	/**
+	 * Removes a script reference so the browser can unload the .js file
+	 *
+	 * <i>Usage:</i> <kbd>$objResponse->removeScript("functions2.js");</kbd>
+	 *
+	 * @param string URL of the Javascript file to remove
+	 * @param string (optional) script to run before removing reference if it exists
+	 * (can be used to call an unload function)
+	 */
+	function removeScript($sFileName, $sUnload = '') {
+		$this->addCommand(array('n'=>'rjs'), ('' != $sUnload) ? array($sFileName, $sUnload) : $sFileName);
 		return $this;
 	}
 	
@@ -551,8 +571,54 @@ class xajaxResponse
 	 */
 	function includeCSS($sFileName)
 	{
-		$this->addCommand(array("n"=>"css"),$sFileName);
+		$this->addCommand(array('n'=>'css'),$sFileName);
 		return $this;
+	}
+		
+	/**
+	 * Adds a remove CSS command message to the response.
+	 *
+	 * <i>Usage:</i> <kbd>$objResponse->removeCSS("stylesheet.css");</kbd>
+	 *
+	 * @param string URL of the CSS file to include
+	 */
+	function removeCSS($sFileName)
+	{
+		$this->addCommand(array('n'=>'rcss'),$sFileName);
+		return $this;
+	}
+	
+	/**
+	 * Adds a wait For CSS command message to the response.
+	 *
+	 * <i>Usage:</i> <kbd>$objResponse->waitForCSS();</kbd>
+	 *
+	 */
+	function waitForCSS() {
+		$sData = "";
+		$this->addCommand(array('n'=>'wcss'),$sData);
+		return $this;
+	}
+	
+	/**
+	 * Adds a wait for command message to the response
+	 *
+	 * <i>Usage:</i> <kbd>$objResponse->waitFor('myVariable == "myValue"');</kbd>
+	 *
+	 * @param string Javascript segment which returns a boolean value when
+	 * evaluated.
+	 */
+	function waitFor($script) {
+		$this->addCommand(array('n'=>'wf'), $script);
+		return $this;
+	}
+	
+	/**
+	 * Stores a value (or array) that will be passed back as part of
+	 * the response.
+	 */
+	function setReturnValue($value) {
+		$this->returnValue = $value;
 	}
 	
 	/**
@@ -584,12 +650,30 @@ class xajaxResponse
 			}
 		}
 		
-		$sXML = "<?xml version=\"1.0\"";
-		if ($this->sEncoding && strlen(trim($this->sEncoding)) > 0)
-			$sXML .= " encoding=\"".$this->sEncoding."\"";
-		$sXML .= " ?"."><xjx>" . $xml . "</xjx>";
+		$charSet = '';
+		$encoding = '';
 		
-		return $sXML;
+		if ($this->sEncoding && strlen(trim($this->sEncoding)) > 0) {
+			$charSet = '; charset="' . $this->sEncoding . '"';
+			$encoding = ' encoding="' . $this->sEncoding . '"';
+		}
+		
+		header('content-type: text/xml' . $charSet);
+		return '<?xml version="1.0"' . $encoding . ' ?'.'><xjx>' . $this->_getReturnValue() . $xml . '</xjx>';
+	}
+	
+	/**
+	 * returns an xml encoded string containing the return value to send
+	 * back as part of the response, if a return value was set, otherwise
+	 * and empty string
+	 */
+	function _getReturnValue() {
+		if (null == $this->returnValue)
+			return '';
+		if ('object' == gettype($this->returnValue) || is_array($this->returnValue)) {
+			return '<xjxrv>'.$this->_arrayToXML($this->_buildObj($this->returnValue)).'</xjxrv>';
+		}
+		return '<xjxrv>'.$this->returnValue.'</xjxrv>';
 	}
 	
 	/**
@@ -615,7 +699,7 @@ class xajaxResponse
 	 */
 	function loadCommands($mCommands, $bBefore=false)
 	{
-		if (is_a($mCommands, "xajaxResponse")) {
+		if (is_a($mCommands, 'xajaxResponse')) {
 			if ($bBefore) {
 				$this->aCommands = array_merge($mCommands->aCommands, $this->aCommands);
 			}
@@ -646,7 +730,7 @@ class xajaxResponse
 	 */
 	function addPluginCommand($objPlugin, $aAttributes, $mData)
 	{
-		$aAttributes["plg"] = $objPlugin->sCallName;
+		$aAttributes['plg'] = $objPlugin->sCallName;
 		$this->addCommand($aAttributes, $mData);
 	}
 
@@ -660,17 +744,15 @@ class xajaxResponse
 	 */
 	function _getXMLForCommand($aAttributes, $mData)
 	{
-		$xml = "<cmd";
+		$xml = '<cmd';
 		foreach($aAttributes as $sAttribute => $sValue)
-		{
 			if ($sAttribute)
 				$xml .= " $sAttribute=\"$sValue\"";
-		}
-		if (is_array($mData)) {
-			$xml .= ">".$this->_arrayToXML($mData)."</cmd>";
-		} else {
-			$xml .= ">".$this->_escape($mData)."</cmd>";
-		}
+		
+		if (is_array($mData)) 
+			$xml .= '>'.$this->_arrayToXML($mData).'</cmd>';
+		else 
+			$xml .= '>'.$this->_escape($mData).'</cmd>';
 		
 		return $xml;
 	}
@@ -682,24 +764,30 @@ class xajaxResponse
 	 * @param mixed associative array of data or string of data
 	 * @return string XML command
 	 */
-	function _arrayToXML($mArray)
-	{
+	function _arrayToXML($mArray) {
 		if (!is_array($mArray))
 			return $this->_escape($mArray);
+		
 		$xml = '<xjxobj>';
-		foreach ($mArray as $aKeyValues)
-		{
-			$xml .= '<e>';
-			foreach($aKeyValues as $sKey=>$sValue)
-			{
-			
-				$xml .= '<'.htmlentities($sKey).'>';
-				$xml .= $this->_arrayToXML($sValue);
-				$xml .= '</'.htmlentities($sKey).'>';	
+		foreach ($mArray as $aKey=>$aKeyValues) {
+			if (is_array($aKeyValues)) {
+				$xml .= '<e>';
+				foreach($aKeyValues as $sKey => $sValue) {
+					$xml .= '<'.htmlentities($sKey).'>';
+					$xml .= $this->_arrayToXML($sValue);
+					$xml .= '</'.htmlentities($sKey).'>';	
+				}
+				$xml .= '</e>';
+			} else {
+				$xml .= '<e><k>';
+				$xml .= $this->_escape($aKey);
+				$xml .= '</k><v>';
+				$xml .= $this->_escape($aKeyValues);
+				$xml .= '</v></e>';
 			}
-			$xml .= '</e>';
 		}
 		$xml .= '</xjxobj>';
+
 		return $xml;
 	}
 	
@@ -725,21 +813,41 @@ class xajaxResponse
 	 */
 	function _escape($sData)
 	{
-		if ($sData !== null && strpos($sData,'<![CDATA[')===FALSE) {
-			if ($this->bOutputEntities) {
-				if (function_exists('mb_convert_encoding')) {
-					$sData = call_user_func_array('mb_convert_encoding', array(&$sData, 'HTML-ENTITIES', $this->sEncoding));
+		if (false == is_numeric($sData))
+			if (null == $sData)
+				return '';
+		
+		$needCDATA = false;
+		
+		if ($this->bOutputEntities) {
+			if (!function_exists('mb_convert_encoding'))
+				trigger_error('The xajax response output could not be converted to HTML entities because the mb_convert_encoding function is not available', E_USER_NOTICE);
+			
+			$sData = call_user_func_array('mb_convert_encoding', array(&$sData, 'HTML-ENTITIES', $this->sEncoding));
+		} else {
+			if ((false !== strpos($sData, '<![CDATA['))
+			|| (false !== strpos($sData, ']]>'))
+			|| (htmlentities($sData) != $sData))
+				$needCDATA = true;
+			
+			$segments = explode('<![CDATA[', $sData);
+			$sData = '';
+			foreach ($segments as $key => $segment) {
+				$fragments = explode(']]>', $segment);
+				$segment = '';
+				foreach ($fragments as $fragment) {
+					if ('' != $segment)
+						$segment .= ']]]]><![CDATA[>';
+					$segment .= $fragment;
 				}
-				else {
-					trigger_error("The xajax response output could not be converted to HTML entities because the mb_convert_encoding function is not available", E_USER_NOTICE);
-				}
+				if ('' != $sData)
+					$sData .= '<![]]><![CDATA[CDATA[';
+				$sData .= $segment;
 			}
-			$sData = str_replace(']]>',']]]]><![CDATA[>', $sData);
-			$sData = "<![CDATA[$sData]]>";
 		}
-		else if ($sData === null) {
-			$sData = "";
-		}
+		
+		if ($needCDATA)
+			$sData = '<![CDATA['.$sData.']]>';
 		
 		return $sData;
 	}
@@ -754,19 +862,152 @@ class xajaxResponse
 	 * @return array data ready for insertion into command list array
 	 */
 	function _buildObj($mData) {
-	    if (gettype($mData) == "object") $mData = get_object_vars($mData);
-	    if (!is_array($mData)) {
-	        return $this->_escape($mData);
-	    }
-	    else {
+	    if (gettype($mData) == 'object')
+			$mData = get_object_vars($mData);
+		
+	    if (is_array($mData)) {
 	    	$aData = array();
-	        foreach ($mData as $key => $value) {
-	            $aData[]['k'] = htmlentities($key);
-	            $aData[sizeof($aData)-1]['v'] = $this->_buildObj($value);
-	        }
+	        foreach ($mData as $key => $value)
+				$aData[] = array(
+					'k'=>$this->_buildObj($key), 
+					'v'=>$this->_buildObj($value)
+				);
 	        return $aData;
-	    }
+	    } else
+			return $mData;
 	}
 	
 }// end class xajaxResponse
-?>
+
+/**
+ * The xajaxCall class is used to create Javascript call commands which 
+ * can be used in event handlers to initiate xajax requests.
+ * 
+ * @package xajax
+ */
+class xajaxCall {
+	/**#@+
+	 * @access protected
+	 */
+	// required
+	var $sFunction; 	// name of the xajax enabled function to call
+	var $sReturnValue;	// return value (default: return false;)
+	// optional
+	var $aParameters;	// parameter value, use quotes
+	var $sMode;			// synchronous or asynchronous
+	var $sRequestType; 	// get or post
+	var $sResponseProcessor;	// name of js function
+	var $sRequestURI;	// URI to send the request to
+	var $sContentType;	// content type of the request
+	
+	function xajaxCall($sFunction = '') {
+		$this->sFunction = $sFunction;
+		$this->aParameters = array();
+		$this->sMode = '';
+		$this->sRequestType = '';
+		$this->sResponseProcessor = '';
+		$this->sRequestURI = '';
+		$this->sContentType = '';
+	}
+	
+	function setFunction($sFunction) {
+		$this->sFunction = $sFunction;
+	}
+	
+	function clearParameters() {
+		$this->aParameters = array();
+	}
+	
+	function addParameter($sParameter, $bUseQuotes = true) {
+		$this->aParameters[] = array($sParameter, $bUseQuotes);
+	}
+	
+	function setMode($sMode) {
+		$this->sMode = $sMode;
+	}
+	
+	function setRequestType($sRequestType) {
+		$this->sRequestType = $sRequestType;
+	}
+	
+	function setResponseProcessor($sResponseProcessor) {
+		$this->sResponseProcessor = $sResponseProcessor;
+	}
+	
+	function setRequestURI($sRequestURI) {
+		$this->sRequestURI = $sRequestURI;
+	}
+	
+	function setContentType($sContentType) {
+		$this->sContentType = $sContentType;
+	}
+	
+	function setReturnValue($sReturnValue) {
+		$this->sReturnValue = $sReturnValue;
+	}
+	
+	function generate() {
+		$output = 'xajax.call("';
+		$output .= $this->sFunction;
+		$output .= '", {';
+		$separator = '';
+		if (0 < count($this->aParameters)) {
+			$output .= 'parameters: [';
+			foreach ($this->aParameters as $aParameter) {
+				$output .= $separator;
+				$bUseQuotes = $aParameter[1];
+				if ($bUseQuotes)
+					$output .= '"';
+				$output .= $aParameter[0];
+				if ($bUseQuotes)
+					$output .= '"';
+				$separator = ',';
+			}
+			$output .= ']';
+		}
+		if (0 < strlen($this->sMode)) {
+			$output .= $separator;
+			$output .= 'mode:"';
+			$output .= $this->sMode;
+			$output .= '"';
+			$separator = ',';
+		}
+		if (0 < strlen($this->sRequestType)) {
+			$output .= $separator;
+			$output .= 'requestType:"';
+			$output .= $this->sRequestType;
+			$output .= '"';
+			$separator = ',';
+		}
+		if (0 < strlen($this->sResponseProcessor)) {
+			$output .= $separator;
+			$output .= 'responseProcessor:';
+			$output .= $this->sResponseProcessor;
+			$separator = ',';
+		}
+		if (0 < strlen($this->sRequestURI)) {
+			$output .= $separator;
+			$output .= 'requestURI:"';
+			$output .= $this->sRequestURI;
+			$output .= '"';
+			$separator = ',';
+		}
+		if (0 < strlen($this->sContentType)) {
+			$output .= $separator;
+			$output .= 'contentType:"';
+			$output .= $this->sContentType;
+			$output .= '"';
+			$separator = ',';
+		}
+		$output .= '}); ';
+		if (0 < strlen($this->sReturnValue)) {
+			$output .= 'return ';
+			$output .= $this->sReturnValue;
+		} else {
+			$output .= 'return false;';
+		}
+		
+		return $output;
+	}
+}
+

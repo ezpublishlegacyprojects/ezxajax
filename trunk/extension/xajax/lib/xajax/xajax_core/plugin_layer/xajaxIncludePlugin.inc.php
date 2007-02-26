@@ -2,7 +2,7 @@
 /**
  * xajaxIncludePlugin.inc.php :: xajax abstract script include plugin class
  *
- * xajax version 0.5 (Beta 1)
+ * xajax version 0.5 (Beta 2)
  * copyright (c) 2006 by Jared White & J. Max Wilson
  * http://www.xajaxproject.org
  *
@@ -15,7 +15,7 @@
  * http://www.xajaxproject.org/bsd_license.txt
  * 
  * @package xajax
- * @version $Id: xajaxIncludePlugin.inc.php 259 2006-10-03 18:14:49Z gaeldesign $
+ * @version $Id: xajaxIncludePlugin.inc.php 317 2007-01-30 19:36:39Z gaeldesign $
  * @copyright Copyright (c) 2005-2006 by Jared White & J. Max Wilson
  * @license http://www.xajaxproject.org/bsd_license.txt BSD License
  */
@@ -27,15 +27,15 @@
  	
  	function __construct()
  	{
- 		if (strtolower(get_class($this)) == "xajaxincludeplugin") {
- 			trigger_error("The xajaxIncludePlugin class is abstract and cannot be instantiated. Please use a concrete subclass instead", E_USER_ERROR);
+ 		if (strtolower(get_class($this)) == 'xajaxincludeplugin') {
+ 			trigger_error('The xajaxIncludePlugin class is abstract and cannot be instantiated. Please use a concrete subclass instead', E_USER_ERROR);
  		}
   	}
  	
  	function xajaxIncludePlugin()
  	{
  		$aArgs = func_get_args();
- 		call_user_func_array(array(&$this, "__construct"), $aArgs);
+ 		call_user_func_array(array(&$this, '__construct'), $aArgs);
  	}
 
  	function setXajax(&$objXajax)
@@ -48,18 +48,18 @@
  		$this->_aFunctions = $aFunctions;
  	}
  	
- 	function getJavascript($sJsURI="", $sJsFile=NULL)
+ 	function getJavascript($sJsURI='', $aJsFiles=array())
  	{
- 		trigger_error("The getJavascript method is abstract and must be implemented in this subclass", E_USER_ERROR);
+ 		trigger_error('The getJavascript method is abstract and must be implemented in this subclass', E_USER_ERROR);
  	}
  	
  	function getJavascriptConfig()
  	{
- 		trigger_error("The getJavascriptConfig method is abstract and must be implemented in this subclass", E_USER_ERROR);
+ 		trigger_error('The getJavascriptConfig method is abstract and must be implemented in this subclass', E_USER_ERROR);
  	}
  	
- 	function getJavascriptInclude($sJsURI="", $sJsFile=NULL)
+ 	function getJavascriptInclude($sJsURI='', $aJsFiles=array())
  	{
- 		trigger_error("The getJavascriptInclude method is abstract and must be implemented in this subclass", E_USER_ERROR); 		
+ 		trigger_error('The getJavascriptInclude method is abstract and must be implemented in this subclass', E_USER_ERROR); 		
  	}
 }

@@ -5,7 +5,7 @@
 function xajaxCompressJavascript($sJS)
 {
 	//remove windows cariage returns
-	$sJS = str_replace("\r","",$sJS);
+	$sJS = str_replace("\r",'',$sJS);
 	
 	//array to store replaced literal strings
 	$literal_strings = array();
@@ -13,20 +13,20 @@ function xajaxCompressJavascript($sJS)
 	//explode the string into lines
 	$lines = explode("\n",$sJS);
 	//loop through all the lines, building a new string at the same time as removing literal strings
-	$clean = "";
+	$clean = '';
 	$inComment = false;
-	$literal = "";
+	$literal = '';
 	$inQuote = false;
 	$escaped = false;
-	$quoteChar = "";
+	$quoteChar = '';
 	
-	for($i=0;$i<count($lines);$i++)
+	for($i=0; $i<count($lines); ++$i)
 	{
 		$line = $lines[$i];
 		$inNormalComment = false;
 	
 		//loop through line's characters and take out any literal strings, replace them with ___i___ where i is the index of this string
-		for($j=0;$j<strlen($line);$j++)
+		for($j=0; $j<strlen($line); ++$j)
 		{
 			$c = substr($line,$j,1);
 			$d = substr($line,$j,2);
@@ -35,7 +35,7 @@ function xajaxCompressJavascript($sJS)
 			if(!$inQuote && !$inComment)
 			{
 				//is this character a quote or a comment
-				if(($c=="\"" || $c=="'") && !$inComment && !$inNormalComment)
+				if(($c=='"' || $c=="'") && !$inComment && !$inNormalComment)
 				{
 					$inQuote = true;
 					$inComment = false;
@@ -55,11 +55,11 @@ function xajaxCompressJavascript($sJS)
 				else if($d=="//") //ignore string markers that are found inside comments
 				{
 					$inNormalComment = true;
-					$clean .= $c;
 				}
 				else
 				{
-					$clean .= $c;
+					if (!$inNormalComment)
+						$clean .= $c;
 				}
 			}
 			else //allready in a string so find end quote
@@ -80,14 +80,7 @@ function xajaxCompressJavascript($sJS)
 				{
 					$inComment = false;
 					$literal .= $d;
-	
-					//subsitute in a marker for the string
-					$clean .= "___" . count($literal_strings) . "___";
-	
-					//push the string onto our array
-					array_push($literal_strings,$literal);
-	
-					$j++;
+					++$j;
 				}
 				else if($c == "\\" && !$escaped)
 					$escaped = true;
@@ -104,7 +97,7 @@ function xajaxCompressJavascript($sJS)
 	$lines = explode("\n",$clean);
 	
 	//now process each line at a time
-	for($i=0;$i<count($lines);$i++)
+	for($i=0; $i<count($lines); ++$i)
 	{
 		$line = $lines[$i];
 	
@@ -136,8 +129,8 @@ function xajaxCompressJavascript($sJS)
 	$sJS = preg_replace("/[\n]*\{[\n]*/","{",$sJS);
 	
 	//finally loop through and replace all the literal strings:
-	for($i=0;$i<count($literal_strings);$i++)
-		$sJS = str_replace("___".$i."___",$literal_strings[$i],$sJS);
+	for($i=0; $i<count($literal_strings); ++$i)
+		$sJS = str_replace('___'.$i.'___',$literal_strings[$i],$sJS);
 	
 	return $sJS;
 }

@@ -52,12 +52,15 @@ class XajaxOperator
                     include_once( 'lib/ezutils/classes/ezini.php' );
 
                     $ini =& eZINI::instance( 'xajax.ini' );
-                    $javascriptFile = 'xajax.js';
 
                     if ( $ini->variable( 'DebugSettings', 'DebugAlert' ) == 'enabled' )
                     {
                         $xajax->setFlag( 'debug', true );
-                        $javascriptFile = 'xajax_uncompressed.js';
+                    }
+
+                    if ( $ini->variable( 'CompressionSettings', 'UseUncompressedScripts' ) == 'enabled' )
+                    {
+                        $xajax->setFlag( 'useUncompressedScripts', true );
                     }
 
                     $functionFiles = $ini->variable( 'ExtensionSettings', 'AvailableFunctions' );
@@ -81,7 +84,7 @@ class XajaxOperator
 
                     include_once( 'lib/ezutils/classes/ezsys.php' );
                     $sys =& eZSys::instance();
-                    $operatorValue = $xajax->getJavascript( $sys->wwwDir() . '/extension/xajax/design/standard/javascript/', $javascriptFile, 'extension/xajax/design/standard/javascript/xajax.js' );
+                    $operatorValue = $xajax->getJavascript( $sys->wwwDir() . '/extension/xajax/design/standard/javascript/' );
 
                     //js stuff that add progress indicator
                     // Since IE6 is not supported we need an ini-flag to handle
@@ -105,14 +108,14 @@ class XajaxOperator
                                 pImg.style.left="50%";
                                 pImg.style.backgroundColor="#CCC";
                             }
-    
+
                             // Only Mozilla currently supported
                             // For IE support, take a look at http://dean.edwards.name/weblog/2005/09/busted/
                             if (document.addEventListener) {
                                 document.addEventListener("DOMContentLoaded", xajax_activityIndicatorInit, false );
                             }
-    
-                            xajax.loadingFunction = function(){
+
+                            xajax.callback.global.onRequest = function(){
                                 screenProp = ezjslib_getScreenProperties();
                                 screenCenterY = screenProp.ScrollY + screenProp.Height/2;
                                 screenCenterX = screenProp.ScrollX + screenProp.Width/2;
@@ -121,8 +124,8 @@ class XajaxOperator
                                 pImg.style.left = ( screenCenterX - pImg.width/2 ) + "px";
                                 pImg.style.display = "inline";
                             };
-    
-                            xajax.doneLoadingFunction = function(){
+
+                            xajax.callback.global.onComplete = function(){
                                 pImg = xajax.$("spinner");
                                 pImg.style.display = "none";
                             };

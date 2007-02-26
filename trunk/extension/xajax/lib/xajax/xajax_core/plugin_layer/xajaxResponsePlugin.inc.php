@@ -2,7 +2,7 @@
 /**
  * xajaxResponsePlugin.inc.php :: xajax abstract response plugin class
  *
- * xajax version 0.5 (Beta 1)
+ * xajax version 0.5 (Beta 2)
  * copyright (c) 2006 by Jared White & J. Max Wilson
  * http://www.xajaxproject.org
  *
@@ -15,7 +15,7 @@
  * http://www.xajaxproject.org/bsd_license.txt
  * 
  * @package xajax
- * @version $Id: xajaxResponsePlugin.inc.php 259 2006-10-03 18:14:49Z gaeldesign $
+ * @version $Id: xajaxResponsePlugin.inc.php 317 2007-01-30 19:36:39Z gaeldesign $
  * @copyright Copyright (c) 2005-2006 by Jared White & J. Max Wilson
  * @license http://www.xajaxproject.org/bsd_license.txt BSD License
  */
