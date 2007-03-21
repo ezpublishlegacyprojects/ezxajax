@@ -15,7 +15,7 @@
  * http://www.xajaxproject.org/bsd_license.txt
  * 
  * @package xajax
- * @version $Id: xajaxResponse.inc.php 298 2006-11-28 13:11:39Z calltoconstruct $
+ * @version $Id: xajaxResponse.inc.php 327 2007-02-28 16:55:26Z calltoconstruct $
  * @copyright Copyright (c) 2005-2006 by Jared White & J. Max Wilson
  * @license http://www.xajaxproject.org/bsd_license.txt BSD License
  */
@@ -517,10 +517,44 @@ class xajaxResponse
 	 *               remove
 	 */
 	function removeHandler($sTarget,$sEvent,$sHandler)
-	{	
+	{
 		$this->addCommand(array('n'=>'rh','t'=>$sTarget,'p'=>$sEvent),$sHandler);
 		return $this;
 	}
+	
+	/**
+	 * Adds a setFunction command message to the response.
+	 * 
+	 * <i>Usage:</i> <kbd>$objResponse->setFunction("myFunction", "arg1,arg2", "alert('Hello World');");</kbd>
+	 * 
+	 * @param string contains the name of the function to be created
+	 * @param string the comma separated list of function arguments
+	 * @param string the Javascript you want the function to contain
+	 */
+	function setFunction($sFunction, $sArgs, $sScript)
+	{
+		$this->addCommand(array('n'=>'sf','f'=>$sFunction,'p'=>$sArgs),$sScript);
+		return $this;
+	}
+	
+	/**
+	 * Adds a wrapFunction command message to the response.
+	 * 
+	 * <i>Usage:</i> <kbd>$objResponse->wrapFunction("myFunction", "arg1,arg2", "alert('starting function: myFunction');", "alert('ending function: myFunction');", "returnValue");</kbd>
+	 * 
+	 * @param string contains the name of the function to be wrapped
+	 * @param string the comma separated list of function arguments
+	 * @param string the Javascript you want the function to contain prior
+	 *		to the call to the original function
+	 * @param string the Javascript you want the function to contain after 
+	 *		the call to the original function
+	 */
+	function wrapFunction($sFunction, $sArgs, $aScripts, $sReturnValueVariable)
+	{
+		$this->addCommand(array('n'=>'wpf','f'=>$sFunction,'p'=>$sArgs,'c'=>$sReturnValueVariable),$aScripts);
+		return $this;
+	}
+	
 	
 	/**
 	 * Adds an include script command message to the response.
@@ -603,13 +637,26 @@ class xajaxResponse
 	/**
 	 * Adds a wait for command message to the response
 	 *
-	 * <i>Usage:</i> <kbd>$objResponse->waitFor('myVariable == "myValue"');</kbd>
+	 * <i>Usage:</i> <kbd>$objResponse->waitFor('myVariable == "myValue"', 60);</kbd>
 	 *
 	 * @param string Javascript segment which returns a boolean value when
 	 * evaluated.
+	 * @param int number of tenths of a second to wait before giving up
 	 */
-	function waitFor($script) {
-		$this->addCommand(array('n'=>'wf'), $script);
+	function waitFor($script, $tenths) {
+		$this->addCommand(array('n'=>'wf','p'=>$tenths), $script);
+		return $this;
+	}
+	
+	/**
+	 * Adds a sleep command message to the response
+	 *
+	 * <i>Usage:</i> <kbd>$objResponse->sleep(60);</kbd>
+	 *
+	 * @param int number of tenths of a second to sleep.
+	 */
+	function sleep($tenths) {
+		$this->addCommand(array('n'=>'s','p'=>$tenths), '');
 		return $this;
 	}
 	
@@ -920,6 +967,9 @@ class xajaxCall {
 	
 	function addParameter($sParameter, $bUseQuotes = true) {
 		$this->aParameters[] = array($sParameter, $bUseQuotes);
+	}
+	function addFormValuesParameter($sFormID) {
+		$this->aParameters[] = array('xajax.getFormValues("'.$sFormID.'")');
 	}
 	
 	function setMode($sMode) {

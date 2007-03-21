@@ -33,9 +33,30 @@ xajax.debug.workId = 'xajaxWork'+ new Date().getTime();
 xajax.debug.windowSource = 'about:blank';
 xajax.debug.windowID = 'xajax_debug_'+xajax.debug.workId;
 if (undefined == xajax.debug.windowStyle)
-	xajax.debug.windowStyle = 'width=800,height=600,scrollbars=yes,resizable=yes,status=yes';
+	xajax.debug.windowStyle = 
+		'width=800,' +
+		'height=600,' +
+		'scrollbars=yes,' +
+		'resizable=yes,' +
+		'status=yes';
 if (undefined == xajax.debug.windowTemplate)
-	xajax.debug.windowTemplate = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"><html><head><title>xajax debug output</title><style type="text/css">.debugEntry { margin: 3px; padding: 3px; border-top: 1px solid #999999; } .debugDate { font-weight: bold; margin: 2px; } .debugText { margin: 2px; } .warningText { margin: 2px; font-weight: bold; } .errorText { margin: 2px; font-weight: bold; color: #ff7777; }</style></head><body><h2>xajax debug output</h2><div id="debugTag"></div></body></html>';
+	xajax.debug.windowTemplate = 
+		'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">' +
+		'<html><head>' +
+		'<title>xajax debug output</title>' +
+		'<style type="text/css">' +
+		'/* <![CDATA[ */' +
+		'.debugEntry { margin: 3px; padding: 3px; border-top: 1px solid #999999; } ' +
+		'.debugDate { font-weight: bold; margin: 2px; } ' +
+		'.debugText { margin: 2px; } ' +
+		'.warningText { margin: 2px; font-weight: bold; } ' +
+		'.errorText { margin: 2px; font-weight: bold; color: #ff7777; }' +
+		'/* ]]> */' +
+		'</style>' +
+		'</head><body>' +
+		'<h2>xajax debug output</h2>' +
+		'<div id="debugTag"></div>' +
+		'</body></html>';
 
 /**
  * xajax.debug.writeMessage
@@ -45,7 +66,19 @@ if (undefined == xajax.debug.windowTemplate)
  * window to write debug messages to; if the window already exists
  * it is reused.
  * 
- * @param {Object} text
+ * @param {string} text
+ * @param {string} prefix
+ * @param {string} class
+ *
+ * The text parameter contains the debugging message to be displayed in the
+ * xajax debugger.  The prefix is prepending onto the text; should indicate
+ * 'Error: ' when an error is being displayed, 'Warning: ' when a warning
+ * is to be displayed or some similar tag.  The class parameter should be
+ * one of the following values:
+ *		warningText // when message is a warning
+ *		errorText // when the message is an error
+ * The class is used to modify the style of the message to make it stand out
+ * in the debugger.
  */
 xajax.debug.writeMessage = function(text, prefix, cls) {
 	try {
@@ -61,9 +94,8 @@ xajax.debug.writeMessage = function(text, prefix, cls) {
 			prefix = '';
 		if (undefined == cls)
 			cls = 'debugText';
-		text = text.replace('&', '&amp;')
-		text = text.replace('<', '&lt;')
-		text = text.replace('>', '&gt;')
+		
+		text = xajax.debug.prepareDebugText(text);
 		
 		var debugTag = xdwd.getElementById('debugTag');
 		var debugEntry = xdwd.createElement('div');
@@ -88,6 +120,39 @@ xajax.debug.writeMessage = function(text, prefix, cls) {
 			text = text.substr(0,1000)+'...\n[long response]\n...';
 			
 		alert('xajax debug:\n ' + text);
+	}
+}
+
+/**
+ * xajax.debug.prepareDebugText
+ *
+ * This function converts special characters to their HTML equivellents
+ * so that they will show up in the xajax debug window
+ */
+xajax.debug.prepareDebugText = function(text) {
+	try {
+		text = text.replace(/&/g, '&amp;');
+		text = text.replace(/</g, '&lt;');
+		text = text.replace(/>/g, '&gt;');
+		return text;
+	} catch (e) {
+		xajax.debug.stringReplace = function(haystack, needle, newNeedle) {
+			var segments = haystack.split(needle);
+			haystack = '';
+			for (var i = 0; i < segments.length; ++i) {
+				if (0 != i)
+					haystack += newNeedle;
+				haystack += segments[i];
+			}
+			return haystack;
+		}
+		xajax.debug.prepareDebugText = function(text) {
+			text = xajax.debug.stringReplace(text, '&', '&amp;');
+			text = xajax.debug.stringReplace(text, '<', '&lt;');
+			text = xajax.debug.stringReplace(text, '>', '&gt;');
+			return text;
+		}
+		xajax.debug.prepareDebugText(text);
 	}
 }
 
@@ -169,12 +234,25 @@ xajax.tools.$ = function(sId) {
 }
 
 /**
- * xajax.debug.objectToXML
+ * xajax.debug._objectToXML
  */
 xajax.debug._objectToXML = xajax.tools._objectToXML;
 xajax.tools._objectToXML = function(obj, guard) {
 	try {
-		return xajax.debug._objectToXML(obj, guard);
+		if (0 == guard.size) {
+			var msg = 'Object to XML: maxDepth = ';
+			msg += guard.maxDepth;
+			msg += ', maxSize = ';
+			msg += guard.maxSize;
+			xajax.debug.writeMessage(msg);
+		}
+		var r = xajax.debug._objectToXML(obj, guard);
+		if (0 == guard.depth) {
+			var msg = 'Object to XML: size = ';
+			msg += guard.size;
+			xajax.debug.writeMessage(msg);
+		}
+		return r;
 	} catch(e) {
 		var msg = '_objectToXml: ';
 		msg += e.name;
@@ -185,6 +263,9 @@ xajax.tools._objectToXML = function(obj, guard) {
 	return '';
 }
 
+/**
+ * xajax.debug._internalSend
+ */
 xajax.debug._internalSend = xajax._internalSend;
 xajax._internalSend = function(oRequest) {
 	xajax.debug.writeMessage('Sending request.');
@@ -219,6 +300,42 @@ xajax.submitRequest = function(oRequest) {
 }
 
 /**
+ * xajax.debug.initializeRequest
+ */
+xajax.debug.initializeRequest = xajax.initializeRequest;
+xajax.initializeRequest = function(oRequest) {
+	var msg = 'Initializing Request';
+	xajax.debug.writeMessage(msg);
+	return xajax.debug.initializeRequest(oRequest);
+}
+
+/**
+ * xajax.debug.processParameters
+ */
+xajax.debug.processParameters = xajax.processParameters;
+xajax.processParameters = function(oRequest) {
+	if (undefined != oRequest.parameters) {
+		var msg = 'Processing Parameters [';
+		msg += oRequest.parameters.length;
+		msg += ']';
+		xajax.debug.writeMessage(msg);
+	} else {
+		xajax.debug.writeMessage('No parameters to process');
+	}
+	return xajax.debug.processParameters(oRequest);
+}
+
+/**
+ * xajax.debug.prepareRequest
+ */
+xajax.debug.prepareRequest = xajax.prepareRequest;
+xajax.prepareRequest = function(oRequest) {
+	var msg = 'Preparing Request';
+	xajax.debug.writeMessage(msg);
+	return xajax.debug.prepareRequest(oRequest);
+}
+
+/**
  * xajax.debug.call
  */
 xajax.debug.call = xajax.call;
@@ -229,7 +346,7 @@ xajax.call = function() {
 		return false;
 	}
 	
-	xajax.debug.writeMessage('Starting xajax...');
+	xajax.debug.writeMessage('Starting xajax Call');
 	
 	var functionName = arguments[0];
 	var oOptions = {}
@@ -253,9 +370,12 @@ xajax.getResponseProcessor = function(oRequest) {
 	if (undefined == fProc) { 
 		var msg = 'No response processor is available to process the response from the server.  ';
 		try {
-			var contentType = "Content-Type: ";
-			contentType += oRequest.request.getResponseHeader('content-type');
+			var contentType = oRequest.request.getResponseHeader('content-type');
+			msg += "Content-Type: ";
 			msg += contentType;
+			if ('text/html' == contentType) {
+				msg += '.  Check for error messages from the server.';
+			}
 		} catch (e) {
 		}
 		xajax.debug.writeMessage(msg, 'Error: ', 'errorText');
@@ -330,14 +450,14 @@ xajax.completeResponse = function(oRequest) {
  */
 xajax.debug.getRequestObject = xajax.tools.getRequestObject;
 xajax.tools.getRequestObject = function() {
-	xajax.debug.writeMessage('Initializing Request Object..');
+	xajax.debug.writeMessage('Initializing Request Object');
 	
-	var returnValue = xajax.debug.getRequestObject();
-	
-	if (null == returnValue)
+	try {
+		return xajax.debug.getRequestObject();
+	} catch (e) {
 		xajax.debug.writeMessage('Request Object Instantiation failed.', 'Error: ', 'errorText');
-	
-	return returnValue;
+		throw e;
+	}
 }
 
 /**

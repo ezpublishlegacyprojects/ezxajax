@@ -77,6 +77,8 @@ xajax.config.setDefault('defaultExpirationTime', 10000);
 xajax.config.setDefault('defaultMethod', 'post');
 xajax.config.setDefault('defaultRetry', 5);
 xajax.config.setDefault('defaultReturnValue', false);
+xajax.config.setDefault('maxObjectDepth', 20);
+xajax.config.setDefault('maxObjectSize', 2000);
 
 /**
  * xajax.tools
@@ -131,7 +133,7 @@ xajax.tools.queue.setWakeup = function(theQ, when) {
 		clearTimeout(theQ.timeout);
 		theQ.timeout = null;
 	}
-	theQ.timout = setTimeout(function() { xajax.tools.queue.process(theQ); }, 10);
+	theQ.timout = setTimeout(function() { xajax.tools.queue.process(theQ); }, when);
 }
 xajax.tools.queue.process = function(theQ) {
 	// clear the timeout, this function is not designed to be
@@ -224,6 +226,24 @@ xajax.tools.arrayContainsValue = function(array, valueToCheck) {
 }
 
 /**
+ * xajax.tools.singleQuotes
+ * xajax.tools.doubleQuotes
+ * 
+ * These functions replace single or double quotes with double or single quotes
+ * so that quotes embedded in script passed in from the php side does not 
+ * cause problems with eval statements executed on the client side.
+ * 
+ * @param {Object} haystack - input string
+ */
+
+xajax.tools.doubleQuotes = function(haystack) {
+	return haystack.replace(new RegExp("'", 'g'), '"');
+}
+xajax.tools.singleQuotes = function(haystack) {
+	return haystack.replace(new RegExp('"', 'g'), "'");
+}
+
+/**
  * xajax.tools._escape
  * 
  * This function determines if the data contains special characters and
@@ -276,28 +296,27 @@ xajax.tools._escape = function(data) {
  * @param {Object} obj
  * @param {Object} guard
  * 
+ * obj is an array or object containing zero or more members; members
+ * can be any data type, including arrays and objects.
+ *
  * guard is an object, therefore passed by reference, which
- * maintains the state of the recursion; this allows the 
+ * maintains the state of the recursion; this allows the
  * function to cap off at a specified depth or number of
- * entries.
- * 
- * TODO: allow the caller to specify the max depth and size
- * by passing parameters in the guard object.
+ * entries.  When calling for the first time, guard should contain
+ * the following:
+ *		guard.size = 0;
+ *		guard.depth = 0;
+ *		guard.maxDepth = ??;
+ *		guard.maxSize = ??;
+ * The default maxDepth and maxSize can be specified in xajax.config
  */
 xajax.tools._objectToXML = function(obj, guard) {
-	if (undefined == guard.depth)
-		guard.depth = 0;
-	if (undefined == guard.size)
-		guard.size = 0;
-	if (20 < guard.depth)
-		return '';
-	if (2000 < guard.size)
-		return '';
-
 	var aXml = [];
 	aXml.push("<xjxobj>");
 	for (var key in obj) {
 		++guard.size;
+		if (guard.maxSize < guard.size)
+			return aXml.join('');
 		if (obj[key]) {
 			if ("constructor" == key)
 				continue;
@@ -308,21 +327,23 @@ xajax.tools._objectToXML = function(obj, guard) {
 			aXml.push("</k><v>");
 			if ("object" == typeof (obj[key])) {
 				++guard.depth;
-				try {
-					aXml.push(xajax.tools._objectToXML(obj[key], guard));
-				} catch (e) {
-					// do nothing, if the debug module is installed
-					// it will catch the exception and handle it
+				if (guard.maxDepth > guard.depth) {
+					try {
+						aXml.push(xajax.tools._objectToXML(obj[key], guard));
+					} catch (e) {
+						// do nothing, if the debug module is installed
+						// it will catch the exception and handle it
+					}
 				}
 				--guard.depth;
 			} else
 				aXml.push(xajax.tools._escape(obj[key]));
-
+				
 			aXml.push("</v></e>");
 		}
 	}
 	aXml.push("</xjxobj>");
-
+	
 	return aXml.join('');
 }
 
@@ -349,21 +370,25 @@ xajax.tools._nodeToObject = function(node) {
 			var value = null;
 			var data = new Array;
 			var child = node.firstChild;
-			do {
-				if ('e' == child.nodeName) {
-					var grandChild = child.firstChild;
-					do {
-						if ('k' == grandChild.nodeName)
-							key = xajax.tools._nodeToObject(grandChild.firstChild);
-						else ('v' == grandChild.nodeName)
-							value = xajax.tools._nodeToObject(grandChild.firstChild);
-					} while (grandChild = grandChild.nextSibling);
-					if (null != key && null != value) {
-						data[key] = value;
-						key = value = null;
+			if (undefined != child) {
+				do {
+					if ('e' == child.nodeName) {
+						var grandChild = child.firstChild;
+						if (undefined != grandChild) {
+							do {
+								if ('k' == grandChild.nodeName)
+									key = xajax.tools._nodeToObject(grandChild.firstChild);
+								else ('v' == grandChild.nodeName)
+									value = xajax.tools._nodeToObject(grandChild.firstChild);
+							} while (grandChild = grandChild.nextSibling);
+						}
+						if (null != key && null != value) {
+							data[key] = value;
+							key = value = null;
+						}
 					}
-				}
-			} while (child = child.nextSibling);
+				} while (child = child.nextSibling);
+			}
 			return data;
 		}
 	}
@@ -386,14 +411,17 @@ if ("undefined" != typeof XMLHttpRequest) {
 		try {
 			return new ActiveXObject("Msxml2.XMLHTTP.4.0");
 		} catch (e) {
-			try {
-				return new ActiveXObject("Msxml2.XMLHTTP");
-			} catch (e2) {
+			xajax.tools.getRequestObject = function() {
 				try {
-				} catch (e3) {
-					return new ActiveXObject("Microsoft.XMLHTTP");
+					return new ActiveXObject("Msxml2.XMLHTTP");
+				} catch (e2) {
+					xajax.tools.getRequestObject = function() {
+						return new ActiveXObject("Microsoft.XMLHTTP");
+					}
+					return xajax.tools.getRequestObject();
 				}
 			}
+			return xajax.tools.getRequestObject();
 		}
 	}
 } else if (window.createRequest) {
@@ -402,7 +430,7 @@ if ("undefined" != typeof XMLHttpRequest) {
 	}
 } else {
 	xajax.tools.getRequestObject = function() {
-		return null;
+		throw { name: 'GetRequestObject', message: 'XMLHttpRequest is not available, xajax is disabled' }
 	}
 }
 
@@ -719,6 +747,8 @@ xajax.initializeRequest = function(oRequest) {
 	oRequest.set('contentType', xc.defaultContentType);
 	oRequest.set('retry', xc.defaultRetry);
 	oRequest.set('returnValue', xc.defaultReturnValue);
+	oRequest.set('maxObjectDepth', xc.maxObjectDepth);
+	oRequest.set('maxObjectSize', xc.maxObjectSize);
 	
 	var xcb = xx.callback;
 	var gcb = xcb.global;
@@ -759,12 +789,10 @@ xajax.initializeRequest = function(oRequest) {
 	if ('get' != oRequest.method)
 		oRequest.method = 'post';
 	
-	oRequest.setCommonRequestHeaders = function() {
-		this.request.setRequestHeader('If-Modified-Since', 'Sat, 1 Jan 2000 00:00:00 GMT');
-	}
+	oRequest.requestRetry = oRequest.retry;
 	
 	if (undefined == oRequest.URI)
-		throw { name: 'Invalid request', message: 'Missing requestURI; autodetection failed; please specify a one explicitly.' }
+		throw { name: 'Invalid request', message: 'Missing URI; autodetection failed; please specify a one explicitly.' }
 }
 
 /**
@@ -794,7 +822,12 @@ xajax.processParameters = function(oRequest) {
 			var oVal = oRequest.parameters[i];
 			if ("object" == typeof(oVal)) {
 				try {
-					oVal = xt._objectToXML(oVal, {});
+					oVal = xt._objectToXML(oVal, {
+						depth: 0,
+						maxDepth: oRequest.maxObjectDepth,
+						size: 0,
+						maxSize: oRequest.maxObjectSize 
+					} );
 				} catch (e) {
 					oVal = '';
 					// do nothing, if the debug module is installed
@@ -809,11 +842,11 @@ xajax.processParameters = function(oRequest) {
 		}
 	}
 	
-	oRequest.parameters = undefined;
+	oRequest.requestURI = oRequest.URI;
 	
 	if ('get' == oRequest.method) {
-		oRequest.URI += oRequest.URI.indexOf('?')== -1 ? '?' : '&';
-		oRequest.URI += rd.join('');
+		oRequest.requestURI += oRequest.requestURI.indexOf('?')== -1 ? '?' : '&';
+		oRequest.requestURI += rd.join('');
 		rd = [];
 	}
 	
@@ -834,6 +867,10 @@ xajax.prepareRequest = function(oRequest) {
 	
 	oRequest.request = xt.getRequestObject();
 	
+	oRequest.setCommonRequestHeaders = function() {
+		this.request.setRequestHeader('If-Modified-Since', 'Sat, 1 Jan 2000 00:00:00 GMT');
+	}
+	
 	if ('asynchronous' == oRequest.mode) {
 		// NOTE: references inside this function should be expanded
 		// IOW, don't use shorthand references like xx for xajax
@@ -851,22 +888,36 @@ xajax.prepareRequest = function(oRequest) {
 		}
 	}
 	
-	oRequest.open = function() {
-		this.request.open(this.method, this.URI, 'asynchronous' == this.mode);
+	if (undefined != oRequest.userName && undefined != oRequest.password) {
+		oRequest.open = function() {
+			this.request.open(
+				this.method, 
+				this.requestURI, 
+				'asynchronous' == this.mode, 
+				oRequest.userName, 
+				oRequest.password);
+		}
+	} else {
+		oRequest.open = function() {
+			this.request.open(
+				this.method, 
+				this.requestURI, 
+				'asynchronous' == this.mode);
+		}
 	}
 	
 	if ('post' == oRequest.method) {
 		oRequest.setRequestHeaders = function() {
 			this.setCommonRequestHeaders();
 			try {
-				this.request.setRequestHeader('Method', 'POST ' + this.URI + ' ' + this.httpVersion);
+				this.request.setRequestHeader('Method', 'POST ' + this.requestURI + ' ' + this.httpVersion);
 				this.request.setRequestHeader('content-type', this.contentType);
 			} catch (e) {
 				this.method = 'get';
-				this.URI += this.URI.indexOf('?')== -1 ? '?' : '&';
-				this.URI += this.requestData;
+				this.requestURI += this.requestURI.indexOf('?')== -1 ? '?' : '&';
+				this.requestURI += this.requestData;
 				this.requestData = '';
-				if (0 == this.retry) this.retry = 1;
+				if (0 == this.requestRetry) this.requestRetry = 1;
 				throw e;
 			}
 		}
@@ -899,16 +950,16 @@ xajax.call = function() {
 	xx.initializeRequest(oRequest);
 	xx.processParameters(oRequest);
 	
-	while (0 < oRequest.retry) {
+	while (0 < oRequest.requestRetry) {
 		try {
-			--oRequest.retry;
+			--oRequest.requestRetry;
 			xx.prepareRequest(oRequest);
 			return xx.submitRequest(oRequest);
 		} catch (e) {
 			xajax.callback.execute(
 				[xajax.callback.global, oRequest.callback], 
 				'onFailure', oRequest);
-			if (0 == oRequest.retry)
+			if (0 == oRequest.requestRetry)
 				throw e;
 		}
 	}
@@ -1219,6 +1270,14 @@ xajax.completeResponse = function(oRequest) {
 		'onComplete', oRequest);
 	oRequest.cursor.onComplete();
 	oRequest.status.onComplete();
+	// clean up
+	oRequest.requestData = undefined;
+	oRequest.requestURI = undefined;
+	oRequest.request = undefined;
+	oRequest.open = undefined
+	oRequest.setCommonRequestHeaders = undefined;
+	oRequest.setRequestHeaders = undefined;
+	oRequest.finishRequest = undefined;
 }
 
 /**
@@ -1282,6 +1341,10 @@ xajax.commands['wf'] = function(args) {
 	args.cmdFullName = 'waitFor';
 	return xajax.js.waitFor(args);
 }
+xajax.commands['s'] = function(args) {
+	args.cmdFullName = 'sleep';
+	return xajax.js.sleep(args);
+}
 xajax.commands['ino'] = function(args) {
 	args.cmdFullName = 'includeScriptOnce';
 	return xajax.js.includeScriptOnce(args.data);
@@ -1316,6 +1379,16 @@ xajax.commands["al"] = function(args) {
 xajax.commands["cc"] = function(args) {
 	args.cmdFullName = "confirmCommands";
 	return xajax.js.confirmCommands(args.data, args.id);
+}
+xajax.commands['sf'] = function(args) {
+	args.cmdFullName = 'setFunction';
+	return xajax.js.setFunction(args.func, args.property, args.data);
+}
+xajax.commands['wpf'] = function(args) {
+	args.cmdFullName = 'wrapFunction';
+	if ('object' != typeof (args.data))
+		throw { name: 'Syntax Error', message: 'Data element should be array of strings of code.' }
+	return xajax.js.wrapFunction(args.func, args.property, args.data, args.type);
 }
 
 xajax.commands["ci"] = function(args) {
@@ -1683,15 +1756,27 @@ xajax.js.waitFor = function(args) {
 	if (false == bResult) {
 		// inject a delay in the queue processing
 		// handle retry counter
-		// TODO: make retry count adjustable
-		if (xajax.tools.queue.retry(args, 600)) {
-			xajax.tools.queue.setWakeup(xajax.response, 10);
+		if (xajax.tools.queue.retry(args, args.property)) {
+			xajax.tools.queue.setWakeup(xajax.response, 100);
 			return false;
 		}
 		// give up, continue processing queue
 	}
 	return true;
 }
+
+xajax.js.sleep = function(args) {
+	// inject a delay in the queue processing
+	// handle retry counter
+	// args.property contains # of 10ths of a second
+	if (xajax.tools.queue.retry(args, args.property)) {
+		xajax.tools.queue.setWakeup(xajax.response, 100);
+		return false;
+	}
+	// wake up, continue processing queue
+	return true;
+}
+
 
 /**
  * xajax.js.call
@@ -1703,13 +1788,21 @@ xajax.js.waitFor = function(args) {
  * @param {Object} parameters
  */
 xajax.js.call = function(func, parameters) {
+	if ('function' != typeof (window[func]))
+		throw { name: 'Invalid Function', message: 'The function name specified by: ' + func + ' is not a valid function.' }
+	
 	var scr = new Array();
 	scr.push(func);
 	scr.push('(');
-	if (0 < parameters.length) {
-		scr.push('parameters[0]');
-		for (var i = 1; i < parameters.length; ++i)
-			scr.push(', parameters[' + i + ']');
+	if (undefined != parameters) {
+		if ('object' == typeof parameters) {
+			var iLen = parameters.length;
+			if (0 < iLen) {
+				scr.push('parameters[0]');
+				for (var i = 1; i < iLen; ++i)
+					scr.push(', parameters[' + i + ']');
+			}
+		}
 	}
 	scr.push(');');
 	eval(scr.join(''));
@@ -1736,6 +1829,90 @@ xajax.js.confirmCommands = function(msg, numberOfCommands) {
 	}
 	return true;
 }
+
+/**
+ * xajax.js.setFunction
+ *
+ * This assists in the construction of a javascript function.
+ */
+xajax.js.setFunction = function(name, args, body) {
+	code = name;
+	code += ' = function(';
+	if ('object' == typeof (args)) {
+		var separator = '';
+		for (var m in args) {
+			code += separator;
+			code += args[m];
+			separator = ',';
+		}
+	} else code += args;
+	code += ') { ';
+	code += body;
+	code += ' }';
+	eval(code);
+}
+
+/**
+ * xajax.js.wrapFunction
+ *
+ * This function provides a method by which a xajax response can cause an existing
+ * javascript function to be wrapped by the code provided
+ */
+xajax.js.wrapFunction = function(name, args, codeBlocks, returnVariable) {
+//	currently we cannot verify the function, because it could be specified like: obj.func
+//
+//	if ('function' != typeof (window[name]))
+//		throw { name: 'Invalid Function', message: 'The function name specified by: ' + name + ' was not found to exist.' }
+	var code = name;
+	code += ' = xajax.js.makeWrapper(';
+	code += name;
+	code += ', args, codeBlocks, returnVariable);';
+	eval(code);
+}
+
+/**
+ * xajax.js.makeWrapper
+ *
+ * Helper function used in the wrapping of an existing javascript function
+ */
+xajax.js.makeWrapper = function(origFun, args, codeBlocks, returnVariable) {
+	var originalCall = '';
+	if (0 < returnVariable.length) {
+		originalCall += returnVariable;
+		originalCall += ' = ';
+	}
+	var originalCall = 	'origFun(';
+	originalCall += args;
+	originalCall += '); ';
+	
+	var code = 'wrapper = function(';
+	code += args;
+	code += ') { ';
+	
+	if (0 < returnVariable.length) {
+		code += ' var ';
+		code += returnVariable;
+		code += ' = null;';
+	}
+	var separator = '';
+	var bLen = codeBlocks.length;
+	for (var b = 0; b < bLen; ++b) {
+		code += separator;
+		code += codeBlocks[b];
+		separator = originalCall;
+	}
+	if (0 < returnVariable.length) {
+		code += ' return ';
+		code += returnVariable;
+		code += ';';
+	}
+	code += ' } ';
+	
+	var wrapper = null;
+	eval(code);
+	return wrapper;
+}
+
 
 /**
  * xajax.forms
@@ -1834,6 +2011,7 @@ xajax.events.setEvent = function(element, event, code) {
 	if ('string' == typeof element)
 		element = xajax.$(element);
 	event = xajax.tools.addOnPrefix(event);
+	code = xajax.tools.doubleQuotes(code);
 	eval('element.' + event + ' = function() { ' + code + '; }');
 	return true;
 }

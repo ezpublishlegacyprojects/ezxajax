@@ -16,7 +16,7 @@
  * http://www.xajaxproject.org/bsd_license.txt
  * 
  * @package xajax
- * @version $Id: xajaxDefaultIncludePlugin.inc.php 319 2007-01-30 19:47:27Z gaeldesign $
+ * @version $Id: xajaxDefaultIncludePlugin.inc.php 326 2007-02-25 13:27:56Z calltoconstruct $
  * @copyright Copyright (c) 2005-2006 by Jared White & J. Max Wilson
  * @license http://www.xajaxproject.org/bsd_license.txt BSD License
  */
@@ -33,7 +33,11 @@
  	
  	function getJavascriptConfig()
  	{
-		$html  = "\n\t\t<script type=\"text/javascript\">\n";
+		$defer = '';
+		if (true === $this->_objXajax->getFlag('scriptDeferral'))
+			$defer = 'defer ';
+		
+		$html  = "\n\t\t<script type='text/javascript' " . $defer . "charset='UTF-8'>\n";
 		$html .= "\t\t/* <![CDATA[ */\n";
 		$html .= "\t\txajax = {};\n";
 		$html .= "\t\txajax.config = {};\n";
@@ -42,6 +46,7 @@
 		$html .= "\t\txajax.config.waitCursor = ".($this->_objXajax->getFlag('waitCursor')?'true':'false').";\n";
 		$html .= "\t\txajax.config.version = '".$this->_objXajax->getVersion()."';\n";
 		$html .= "\t\txajax.config.legacy = ".(is_a($this->_objXajax, 'legacyXajax')?'true':'false').";\n";
+		$html .= "\t\txajax.config.defaultMode = '".$this->_objXajax->getDefaultMode()."';\n";
 		$html .= "\n";
 
 		foreach(array_keys($this->_aFunctions) as $sFunction) {
@@ -67,17 +72,25 @@
 			// to hook all other functions (to catch exceptions)
 			if (true === $this->_objXajax->getFlag('debug'))
  				$aJsFiles[] = array($this->_getScriptFilename('xajax_js/xajax_debug.js'), 'xajax.debug');
+			
+			// NOTE: verbose debugging should always follow the debug module
+			if (true === $this->_objXajax->getFlag('verbose'))
+				$aJsFiles[] = array($this->_getScriptFilename('xajax_js/xajax_verbose.js'), 'xajax.debug.verbose');
  		}
 		
 		if ($sJsURI != '' && substr($sJsURI, -1) != '/') 
 			$sJsURI .= '/';
 		
+		$defer = '';
+		if (true === $this->_objXajax->getFlag('scriptDeferral'))
+			$defer = 'defer ';
+		
 		$html = '';
 		foreach ($aJsFiles as $aJsFile) {
-			$html .= "\t\t<script type=\"text/javascript\" src=\"" . $sJsURI . $aJsFile[0] . "\"></script>\n";
+			$html .= "\t\t<script type='text/javascript' src='" . $sJsURI . $aJsFile[0] . "' " . $defer . "charset='UTF-8'></script>\n";
 			if ($this->_objXajax->getTimeout())
 			{
-				$html .= "\t\t<script type=\"text/javascript\">\n";
+				$html .= "\t\t<script type='text/javascript' " . $defer . "charset='UTF-8'>\n";
 				$html .= "\t\t/* <![CDATA[ */\n";
 				$html .= "\t\twindow.setTimeout(\n";
 				$html .= "\t\t function () {\n";

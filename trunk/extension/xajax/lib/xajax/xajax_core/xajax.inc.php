@@ -15,7 +15,7 @@
  * http://www.xajaxproject.org/bsd_license.txt
  * 
  * @package xajax
- * @version $Id: xajax.inc.php 318 2007-01-30 19:38:55Z gaeldesign $
+ * @version $Id: xajax.inc.php 327 2007-02-28 16:55:26Z calltoconstruct $
  * @copyright Copyright (c) 2005-2006 by Jared White & J. Max Wilson
  * @license http://www.xajaxproject.org/bsd_license.txt BSD License
  */
@@ -92,6 +92,10 @@ class xajax
 	 */
 	var $sRequestURI;
 	/**
+	 * @var string The default Mode for making requests to the xajax object
+	 */
+	var $sDefaultMode;
+	/**
 	 * @var string The prefix to prepend to the javascript wraper function name
 	 */
 	var $sWrapperPrefix;
@@ -99,6 +103,10 @@ class xajax
 	 * @var boolean Show debug messages (default false)
 	 */
 	var $bDebug;
+	/**
+	 * @var boolean Show verbose debug messages (default false)
+	 */
+	var $bVerbose;
 	/**
 	 * @var boolean Use the uncompressed versions of the Javascript
 	 */
@@ -119,6 +127,10 @@ class xajax
 	 * @var boolean Use an special xajax error handler so the errors are sent to the browser properly (default false)
 	 */
 	var $bErrorHandler;
+	/**
+	 * @var boolean Use script deferral for faster initial page rendering (default false)
+	 */
+	var $bScriptDeferral;
 	/**
 	 * @var string Specify what, if any, file xajax should log errors to (and more information in a future release)
 	 */
@@ -173,12 +185,15 @@ class xajax
 		$this->sRequestURI = $sRequestURI;
 		if ($this->sRequestURI == '')
 			$this->sRequestURI = $this->_detectURI();
+		$this->sDefaultMode = "asynchronous";
 		$this->sWrapperPrefix = 'xajax_';
 		$this->setFlags(array(
 			'debug' => false,
+			'verbose' => false,
 			'useUncompressedScripts' => false,
 			'statusMessages' => false,
 			'waitCursor' => true,
+			'scriptDeferral' => false,
 			'exitAllowed' => true,
 			'errorHandler' => false,
 			'cleanBuffer' => false,
@@ -192,18 +207,33 @@ class xajax
 		
 		// Setup plugin manager
 		$oPluginManager =& xajaxPluginManager::getInstance();
-		$sMandatoryPluginFolder = dirname(__FILE__) . '/plugin_layer';
-		$oPluginManager->addPluginFolder($sMandatoryPluginFolder);
-
+		
 		$sOptionalPluginFolder = dirname(dirname(__FILE__)) . '/xajax_plugins';
 		if ($oPluginManager->addPluginFolder($sOptionalPluginFolder)) {
-			// TODO...load plugins?
+			if ($handle = opendir($sOptionalPluginFolder)) {
+				while (!(false === ($file = readdir($handle)))) {
+					if (8 < strlen($file)) {
+						if ('.inc.php' == substr($file, strlen($file) - 8, 8)) {
+							$file = substr($file, 0, strlen($file) - 8);
+							$oPluginManager->loadPluginFile($file);
+						}
+					}
+				}
+				
+				closedir($handle);
+			}
 		}
 		
-		$oPluginManager->loadPluginFile('xajaxDefaultRequestProcessorPlugin');
-		$oPluginManager->registerRequestProcessorPlugin(new xajaxDefaultRequestProcessorPlugin());			
-		$oPluginManager->loadPluginFile('xajaxDefaultIncludePlugin');
-		$oPluginManager->registerIncludePlugin(new xajaxDefaultIncludePlugin());			
+		$sMandatoryPluginFolder = dirname(__FILE__) . '/plugin_layer';
+		if ($oPluginManager->addPluginFolder($sMandatoryPluginFolder)) {
+			$oPluginManager->loadPluginFile('xajaxDefaultRequestProcessorPlugin');
+			$oPluginManager->registerRequestProcessorPlugin(new xajaxDefaultRequestProcessorPlugin());
+			
+			if (false === $this->canProcessRequest()) {
+				$oPluginManager->loadPluginFile('xajaxDefaultIncludePlugin');
+				$oPluginManager->registerIncludePlugin(new xajaxDefaultIncludePlugin());
+			}
+		}
 	}
 	
 	/**
@@ -251,8 +281,10 @@ class xajax
 	 * 
 	 * <ul>
 	 * <li>debug: false</li>
+	 * <li>verbose: false</li>
 	 * <li>statusMessages: false</li>
 	 * <li>waitCursor: true</li>
+	 * <li>scriptDeferral: false</li>
 	 * <li>exitAllowed: true</li>
 	 * <li>errorHandler: false</li>
 	 * <li>cleanBuffer: false</li>
@@ -333,6 +365,28 @@ class xajax
 	function getRequestURI()
 	{
 		return $this->sRequestURI;
+	}
+	
+	/**
+	 * Sets the default Mode for requests
+	 * <i>Usage:</i> <kbd>$xajax->setDefaultMode("synchronous");</kbd>
+	 *
+	 * @param string the Mode used for making requests from the browser
+	 * 				 to the server (can be synchronous or asynchronous)
+	 */
+	function setDefaultMode($sDefaultMode)
+	{
+		$this->sDefaultMode = $sDefaultMode;
+	}
+	
+	/**
+	 * Returns the current Default Mode
+	 *
+	 * @return string
+	 */
+	function getDefaultMode()
+	{
+		return $this->sDefaultMode;
 	}
 
 	/**

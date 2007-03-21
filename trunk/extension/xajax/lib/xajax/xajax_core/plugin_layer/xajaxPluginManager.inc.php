@@ -15,11 +15,11 @@
  * http://www.xajaxproject.org/bsd_license.txt
  * 
  * @package xajax
- * @version $Id: xajaxPluginManager.inc.php 317 2007-01-30 19:36:39Z gaeldesign $
+ * @version $Id: xajaxPluginManager.inc.php 327 2007-02-28 16:55:26Z calltoconstruct $
  * @copyright Copyright (c) 2005-2006 by Jared White & J. Max Wilson
  * @license http://www.xajaxproject.org/bsd_license.txt BSD License
  */
- 
+
 class xajaxPluginManager
 {
 	var $aPluginFolders;
@@ -40,6 +40,7 @@ class xajaxPluginManager
 	{
 		if (!file_exists($sFolder)) return false;
 		$this->aPluginFolders[$sFolder] = $sFolder;
+		return true;
 	}
 	
 	function loadPluginFile($sPluginName)
@@ -57,7 +58,7 @@ class xajaxPluginManager
 	
 	function loadAllPlugins()
 	{
-		// to do
+		// TODO:
 	}
 	
 	function registerRequestProcessorPlugin(&$objPlugin)
@@ -66,19 +67,19 @@ class xajaxPluginManager
 			$this->objRequestProcessorPlugin = &$objPlugin;
 		}
 	}
-
+	
 	function &getRequestProcessorPlugin()
 	{
 		return $this->objRequestProcessorPlugin;
 	}
-
+	
 	function registerIncludePlugin(&$objPlugin)
 	{
 		if (is_subclass_of($objPlugin, "xajaxIncludePlugin")) {
 			$this->objIncludePlugin = &$objPlugin;
 		}
 	}
-
+	
 	function &getIncludePlugin()
 	{
 		return $this->objIncludePlugin;

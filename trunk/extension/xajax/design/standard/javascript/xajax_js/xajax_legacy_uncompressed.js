@@ -20,6 +20,16 @@ xajax.legacy.call = xajax.call;
 xajax.call = function(sFunction, objParameters) {
 	var oOpt = {}
 	oOpt.parameters = objParameters;
+	if (undefined != xajax.loadingFunction) {
+		if (undefined == oOpt.callback)
+			oOpt.callback = {}
+		oOpt.callback.onResponseDelay = xajax.loadingFunction;
+	}
+	if (undefined != xajax.doneLoadingFunction) {
+		if (undefined == oOpt.callback)
+			oOpt.callback = {}
+		oOpt.callback.onComplete = xajax.doneLoadingFunction;
+	}
 	return xajax.legacy.call(sFunction, oOpt);
 }
 
