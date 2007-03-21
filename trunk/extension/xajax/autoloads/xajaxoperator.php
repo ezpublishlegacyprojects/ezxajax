@@ -53,14 +53,29 @@ class XajaxOperator
 
                     $ini =& eZINI::instance( 'xajax.ini' );
 
-                    if ( $ini->variable( 'DebugSettings', 'DebugAlert' ) == 'enabled' )
+                    // left here for backward compatibility
+                    if ( $ini->hasVariable( 'DebugSettings', 'DebugAlert' ) )
                     {
-                        $xajax->setFlag( 'debug', true );
+                        $useDebug = ( $ini->variable( 'DebugSettings', 'DebugAlert' ) == 'enabled' );
+                        $xajax->setFlag( 'debug', $useDebug );
                     }
 
-                    if ( $ini->variable( 'CompressionSettings', 'UseUncompressedScripts' ) == 'enabled' )
+                    // left here for backward compatibility
+                    if ( $ini->hasVariable( 'CompressionSettings', 'UseUncompressedScripts' ) )
                     {
-                        $xajax->setFlag( 'useUncompressedScripts', true );
+                        $useUncompressedScripts = ( $ini->variable( 'CompressionSettings', 'UseUncompressedScripts' ) == 'enabled' );
+                        $xajax->setFlag( 'useUncompressedScripts', $useUncompressedScripts );
+                    }
+
+                    if ( $ini->hasGroup( 'Flags' ) )
+                    {
+                        $flags =& $ini->group( 'Flags' );
+                        foreach ( $flags as $flagName => $flagINIValue )
+                        {
+                            $normalizedFlagValue = strtolower( trim( $flagINIValue ) );
+                            $flagValue = ( $normalizedFlagValue == 'enabled' || $normalizedFlagValue == 'true' );
+                            $xajax->setFlag( $flagName, $flagValue );
+                        }
                     }
 
                     $functionFiles = $ini->variable( 'ExtensionSettings', 'AvailableFunctions' );
@@ -85,18 +100,36 @@ class XajaxOperator
                     include_once( 'lib/ezutils/classes/ezsys.php' );
                     $sys =& eZSys::instance();
                     $operatorValue = $xajax->getJavascript( $sys->wwwDir() . '/extension/xajax/design/standard/javascript/' );
-/*
-                    //js stuff that add progress indicator
-                    // Since IE6 is not supported we need an ini-flag to handle
-                    if ( $ini->variable( 'Compatibility', 'IE6' ) == 'true' )
-                    {
 
-                    }
-                    else
+                    if ( $ini->variable( 'GeneralSettings', 'ActivityIndicator' ) == 'enabled' )
                     {
+                        /*
+                           Now add some code to insert and control an ajax activity indicator.
+                           In browsers where DOMContentLoaded is supported, we load the javaScript on that event,
+                           in other browsers, we'll use the load event instead
+
+                           Maybe this can be improved in the future. Interesting resources:
+                           - http://dean.edwards.name/weblog/2005/09/busted/
+                           - http://dean.edwards.name/weblog/2006/06/again/
+                        */
                         $operatorValue.='<script type="text/javascript">
                             <!--
-                            function xajax_activityIndicatorInit() {
+                            // BC with 0.5 beta 1
+                            xajax.config.defaultReturnValue = true;
+
+                            function xajax_activityIndicatorInit(e) {
+                                if (!e){
+                                   var e=window.event;
+                                }
+
+                                // return if this function has been flagged
+                                if (arguments.callee.done) {
+                                    return;
+                                }
+
+                                // flag this function so we do not do the same thing twice
+                                arguments.callee.done = true;
+
                                 var b=document.getElementsByTagName("body")[0];
                                 var pImg=new Image();
                                 pImg.src = "' . $this->ezimage( "ajax-activity_indicator.gif" ) . '";
@@ -109,34 +142,39 @@ class XajaxOperator
                                 pImg.style.backgroundColor="#CCC";
                             }
 
-                            // Only Mozilla currently supported
-                            // For IE support, take a look at http://dean.edwards.name/weblog/2005/09/busted/
+
                             if (document.addEventListener) {
                                 document.addEventListener("DOMContentLoaded", xajax_activityIndicatorInit, false );
+                                // fallback for browsers supporting addEventListener but not the DOMContentLoaded event
+                                window.addEventListener("load", xajax_activityIndicatorInit, false );
+                            } else if (window.attachEvent) {
+                                // IE
+                                window.attachEvent("onload", xajax_activityIndicatorInit);
                             }
 
                             xajax.callback.global.onResponseDelay = function(){
-                                screenProp = ezjslib_getScreenProperties();
-                                screenCenterY = screenProp.ScrollY + screenProp.Height/2;
-                                screenCenterX = screenProp.ScrollX + screenProp.Width/2;
-                                pImg = xajax.$("spinner");
-                                pImg.style.top = (screenCenterY - pImg.height/2 ) + "px";
-                                pImg.style.left = ( screenCenterX - pImg.width/2 ) + "px";
-                                pImg.style.display = "inline";
+                                var screenProp = ezjslib_getScreenProperties();
+                                var screenCenterY = screenProp.ScrollY + screenProp.Height/2;
+                                var screenCenterX = screenProp.ScrollX + screenProp.Width/2;
+                                var pImg = xajax.$("spinner");
+                                if ( pImg )
+                                {
+                                    pImg.style.top = (screenCenterY - pImg.height/2 ) + "px";
+                                    pImg.style.left = ( screenCenterX - pImg.width/2 ) + "px";
+                                    pImg.style.display = "inline";
+                                }
                             };
 
                             xajax.callback.global.beforeResponseProcessing = function(){
-                                pImg = xajax.$("spinner");
-                                pImg.style.display = "none";
+                                var pImg = xajax.$("spinner");
+                                if ( pImg )
+                                {
+                                    pImg.style.display = "none";
+                                }
                             };
                             -->
                             </script>';
-		    }
- */
-		    $operatorValue.="<div id='loadingBar' style='display:none;z-index:100000;position:absolute;width:100%;height:100%;background:no-repeat url(".$this->ezimage( "ajax-activity_indicator.gif" ) .") 50% 50%;text-indent:-1000em;'>Loading...</div>".
-		    		      "\n<script type='text/javascript'>xajax.callback.global.onRequest= function(){xajax.$('loadingBar').style.display='block';};".
-                      "\nxajax.callback.global.onComplete = function(){xajax.$('loadingBar').style.display='none';}". 
-		      "</script>";
+                    }
                 }break;
             default:
                 {
