@@ -2,8 +2,6 @@
 
 class XajaxOperator
 {
-    var $Operators;
-
     function XajaxOperator( )
     {
         $this->Operators = array( 'xajax_javascript' );
@@ -79,7 +77,8 @@ class XajaxOperator
                     }
 
                     $functionFiles = $ini->variable( 'ExtensionSettings', 'AvailableFunctions' );
-                    $extensionDirectories = array_merge( 'xajax', $ini->variable( 'ExtensionSettings', 'ExtensionDirectories' ) );
+                    $defaultFunctionDirs = array( 'xajax' );
+                    $extensionDirectories = array_merge( $defaultFunctionDirs, $ini->variable( 'ExtensionSettings', 'ExtensionDirectories' ) );
                     $directoryList = eZExtension::expandedPathList( $extensionDirectories, 'xajax' );
 
                     if ( count( $functionFiles ) > 0 )
