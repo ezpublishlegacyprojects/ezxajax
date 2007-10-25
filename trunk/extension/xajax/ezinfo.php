@@ -1,4 +1,12 @@
 <?php
+/**
+ * File containing the xajaxInfo class.
+ *
+ * @package xajax
+ * @version //autogentag//
+ * @copyright Copyright (C) 2006 SCK-CEN All rights reserved.
+ * @license http://www.gnu.org/licenses/lgpl.txt LGPL License
+ */
 class xajaxInfo
 {
     function info()

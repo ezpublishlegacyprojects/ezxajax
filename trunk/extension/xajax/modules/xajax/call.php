@@ -1,5 +1,12 @@
 <?php
-
+/**
+ * File call.php
+ *
+ * @package xajax
+ * @version //autogentag//
+ * @copyright Copyright (C) 2006 SCK-CEN All rights reserved.
+ * @license http://www.gnu.org/licenses/lgpl.txt LGPL License
+ */
     include_once( 'extension/xajax/lib/xajax/xajax_core/xajax.inc.php' );
     include_once( 'lib/ezutils/classes/ezsys.php' );
 

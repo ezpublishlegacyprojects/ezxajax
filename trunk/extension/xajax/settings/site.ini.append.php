@@ -1,7 +1,8 @@
-#?ini charset="iso-8859-1"?
+<?php /* #?ini charset="utf-8"?
 
 [TemplateSettings]
 ExtensionAutoloadPath[]=xajax
 
 [RoleSettings]
 PolicyOmitList[]=xajax
+*/ ?>
