@@ -1,17 +1,23 @@
 <?php
-// xajaxCompressJavascript() compresses the javascript code for more efficient delivery
-// used internally 
-// $sJS is a string containing the javascript code to compress
-function xajaxCompressJavascript($sJS)
+
+/*
+	Function: xajaxCompressFile
+	
+	<xajax> will call this function internally to compress the javascript code for 
+	more efficient delivery.
+	
+	$sFile - (stirng):  The file to be compressed.
+*/
+function xajaxCompressFile($sFile)
 {
 	//remove windows cariage returns
-	$sJS = str_replace("\r",'',$sJS);
+	$sFile = str_replace("\r",'',$sFile);
 	
 	//array to store replaced literal strings
 	$literal_strings = array();
 	
 	//explode the string into lines
-	$lines = explode("\n",$sJS);
+	$lines = explode("\n",$sFile);
 	//loop through all the lines, building a new string at the same time as removing literal strings
 	$clean = '';
 	$inComment = false;
@@ -20,13 +26,15 @@ function xajaxCompressJavascript($sJS)
 	$escaped = false;
 	$quoteChar = '';
 	
-	for($i=0; $i<count($lines); ++$i)
+	$iLen = count($lines);
+	for($i=0; $i<$iLen; ++$i)
 	{
 		$line = $lines[$i];
 		$inNormalComment = false;
 	
 		//loop through line's characters and take out any literal strings, replace them with ___i___ where i is the index of this string
-		for($j=0; $j<strlen($line); ++$j)
+		$jLen = strlen($line);
+		for($j=0; $j<$jLen; ++$j)
 		{
 			$c = substr($line,$j,1);
 			$d = substr($line,$j,2);
@@ -97,7 +105,8 @@ function xajaxCompressJavascript($sJS)
 	$lines = explode("\n",$clean);
 	
 	//now process each line at a time
-	for($i=0; $i<count($lines); ++$i)
+	$iLen = count($lines);
+	for($i=0; $i<$iLen; ++$i)
 	{
 		$line = $lines[$i];
 	
@@ -117,21 +126,21 @@ function xajaxCompressJavascript($sJS)
 	}
 	
 	//implode the lines
-	$sJS = implode("\n",$lines);
+	$sFile = implode("\n",$lines);
 	
 	//make sure there is a max of 1 \n after each line
-	$sJS = preg_replace("/[\n]+/","\n",$sJS);
+	$sFile = preg_replace("/[\n]+/","\n",$sFile);
 	
 	//strip out line breaks that immediately follow a semi-colon
-	$sJS = preg_replace("/;\n/",";",$sJS);
+	$sFile = preg_replace("/;\n/",";",$sFile);
 	
 	//curly brackets aren't on their own
-	$sJS = preg_replace("/[\n]*\{[\n]*/","{",$sJS);
+	$sFile = preg_replace("/[\n]*\{[\n]*/","{",$sFile);
 	
 	//finally loop through and replace all the literal strings:
-	for($i=0; $i<count($literal_strings); ++$i)
-		$sJS = str_replace('___'.$i.'___',$literal_strings[$i],$sJS);
+	$iLen = count($literal_strings);
+	for($i=0; $i<$iLen; ++$i)
+		$sFile = str_replace('___'.$i.'___',$literal_strings[$i],$sFile);
 	
-	return $sJS;
+	return $sFile;
 }
-?>

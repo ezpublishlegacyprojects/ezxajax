@@ -1,47 +1,63 @@
 ===============================================================================
- xajax PHP & Javascript Library
- The easiest way to develop powerful Ajax applications with PHP
+ 
+     xajax PHP & Javascript Library
+     The easiest way to develop powerful Ajax applications with PHP
 
- Version 0.5 (Beta 2)
- README Text File
- January 26, 2007
+     Version 0.5 (Beta 4)
+     README Text File
+     September 5, 2007
 
- ------------------------------------------------------
- | ** Release Notes:                                  |
- | See release_notes.txt in this download archive     |
- |                                                    |
- | ** Project Managers:                               |
- | Jared White (jared@intuitivefuture.com)            |
- | J. Max Wilson (jmaxwilson@users.sourceforge.net)   |
- |                                                    |
- | ** Developers:                                     |
- | Eion Robb (eion@bigfoot.com)                       |
- | Joseph Woolley (joe@calledtoconstruct.net)         | 
- ------------------------------------------------------
+     ------------------------------------------------------
+     | ** Release Notes:                                  |
+     | See release_notes.txt in this download archive     |
+     |                                                    |
+     | ** Project Managers:                               |
+     | Joseph Woolley (joe@calledtoconstruct.net)         |
+     | J. Max Wilson (jmaxwilson@users.sourceforge.net)   |
+     |                                                    |
+     | ** Developers:                                     |
+     | Steffen Konerow (steffen@nrg-media.de)             |
+     | Jared White (jared@intuitivefuture.com)            |
+     | Eion Robb (eion@bigfoot.com)                       | 
+     ------------------------------------------------------
+
 ===============================================================================
 
- :: To find out what's changed since the 0.5 Beta 1 release of xajax, ::
- :: view the Release Notes in the file listed above.                  ::
+    :: To find out what's changed since the 0.5 Beta 3 release of xajax, ::
+    :: view the Release Notes in the file listed above.                  ::
 
-The Beta 2 release of xajax 0.5 is a big step forward for the project, thanks
-to a major contribution of a brand-new Javascript engine by our new developer
-Joseph Woolley (CtC). It took us a while to refine the design and ensure
-compatibility with all of the various xajax features we needed to implement,
-but we think you'll agree it was worth the wait.
+===============================================================================
 
-Beta 2 marks the beginning of stabilization of the 0.5 API on both the PHP and
-Javascript side. Any changes we make from here on out leading up to the final
-0.5 release will be small, unless there is an overwhelming and widely
-recognized reason for a large modification. Basically, you can start to design
-and test applications using 0.5 Beta 2 with a reasonable degree of confidence.
+xajax 0.5 is leaps and bounds forward from the last stable release, however, 
+xajax 0.2.5 was released to help bridge the gap.  xajax 0.5 has an 
+extensible and flexible plugin interface so both the php and javascript
+engines can be adapted to fit your needs.  With xajax 0.5 beta 3, we've added
+an HTML control library with built in support for both plain and xajax based
+javascript and added new features that will give you a development platform
+to build on for years to come.  In this release, we've added the ability
+to customize debug, warning and error messages, thus allowing for easier 
+development and debugging for non-english speaking programmers.
 
-We're working hard to bring the documentation up to snuff with the new Beta.
-In the meantime, we encourage you to visit our forums at
-http://community.xajaxproject.com and ask for help and give us your feedback.
-You can also report bugs you find at http://www.sourceforge.net/projects/xajax
-using our bug tracker.
+Beta 4 represents a solidification of the xajax php and javascript code, so
+from this point, the xajax interface will remain mostly unchanged until stable
+release.  We have greatly improved the documentation that is available for
+the xajax api.  In addition, we will continue to work hard to resolve any
+issues that are discovered in the code, the documentation, wiki and to answer
+questions in the forum.
 
-Thank you for trying out xajax 0.5 Beta 2! We hope you like it!
+We published an updated website at http://xajaxproject.com  Thanks to Jared and
+Steffen for putting together a great looking site with a lot of functionality 
+and flexibility!  The forums continue to be active and interesting, so be sure 
+to check in from time to time to keep current with all things xajax at 
+http://community.xajaxproject.com and visit sourceforge for posting feature
+requests, bug fix requests and patches at http://www.sourceforge.net/projects/xajax
+
+Thank you for downloading xajax 0.5 beta 4!
+
+____________________________________________________________________
+
+
+"it's safer, better, faster and even more bright and shiny" - Steffen
 
 ____________________________________________________________________
 
@@ -112,9 +128,6 @@ supported or configured correctly. If worst comes to worst, post
 a message in our forums and someone may be able to help you.
 
 4. Documentation
-
-** NOTE: out-of-date docs will be updated for Beta 2 over the
-coming days! **
 
 Detailed documentation for the xajax PHP classes is available on
 our wiki (URL listed above in section 2), and more is on the way

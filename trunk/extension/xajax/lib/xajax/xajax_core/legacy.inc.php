@@ -1,6 +1,6 @@
 <?php
 class legacyXajaxResponse extends xajaxResponse {
-	function outputEntitiesOn()	{ $this->setOutputEntities(true); }
+	function outputEntitiesOn()		{ $this->setOutputEntities(true); }
 	function outputEntitiesOff()	{ $this->setOutputEntities(false); }
 	function addConfirmCommands()	{ $temp=func_get_args(); return call_user_func_array(array(&$this, 'confirmCommands'), $temp); }
 	function addAssign()			{ $temp=func_get_args(); return call_user_func_array(array(&$this, 'assign'), $temp); }
@@ -19,54 +19,55 @@ class legacyXajaxResponse extends xajaxResponse {
 	function addCreateInput()		{ $temp=func_get_args(); return call_user_func_array(array(&$this, 'createInput'), $temp); }
 	function addInsertInput()		{ $temp=func_get_args(); return call_user_func_array(array(&$this, 'insertInput'), $temp); }
 	function addInsertInputAfter()	{ $temp=func_get_args(); return call_user_func_array(array(&$this, 'insertInputAfter'), $temp); }
-	function addRemoveHandler()	{ $temp=func_get_args(); return call_user_func_array(array(&$this, 'removeHandler'), $temp); }
-	function addIncludeScript()	{ $temp=func_get_args(); return call_user_func_array(array(&$this, 'includeScript'), $temp); }
+	function addRemoveHandler()		{ $temp=func_get_args(); return call_user_func_array(array(&$this, 'removeHandler'), $temp); }
+	function addIncludeScript()		{ $temp=func_get_args(); return call_user_func_array(array(&$this, 'includeScript'), $temp); }
 	function addIncludeCSS()		{ $temp=func_get_args(); return call_user_func_array(array(&$this, 'includeCSS'), $temp); }
 	function &getXML()				{ return $this; }
-	
 }
 
 class legacyXajax extends xajax {
-	function legacyXajax($sRequestURI="",$sWrapperPrefix="xajax_",$sEncoding=XAJAX_DEFAULT_CHAR_ENCODING,$bDebug=false)
+	function legacyXajax($sRequestURI='', $sWrapperPrefix='xajax_', $sEncoding=XAJAX_DEFAULT_CHAR_ENCODING, $bDebug=false)
 	{
-		parent::xajax($sRequestURI);
-		$this->setWrapperPrefix($sWrapperPrefix);
-		$this->setCharEncoding($sEncoding);
-		$this->setFlag('debug', $bDebug);
+		parent::xajax();
+		$this->configure('requestURI', $sRequestURI);
+		$this->configure('wrapperPrefix', $sWrapperPrefix);
+		$this->configure('characterEncoding', $sEncoding);
+		$this->configure('debug', $bDebug);
 	}
-	function registerExternalFunction($mFunction,$sFunctionName)
+	function registerExternalFunction($mFunction, $sInclude)
 	{
-		$this->registerFunction($mFunction,$sFunctionName);
+		$xuf =& new xajaxUserFunction($mFunction, $sInclude);
+		$this->register(XAJAX_FUNCTION, $xuf);
 	}
 	function registerCatchAllFunction($mFunction)
 	{
 		if (is_array($mFunction)) array_shift($mFunction);
-		$this->registerEvent($mFunction, "onMissingFunction");
+		$this->register(XAJAX_PROCESSING_EVENT, XAJAX_PROCESSING_EVENT_INVALID, $mFunction);
 	}
 	function registerPreFunction($mFunction)
 	{
 		if (is_array($mFunction)) array_shift($mFunction);
-		$this->registerEvent($mFunction, "beforeProcessing");
+		$this->register(XAJAX_PROCESSING_EVENT, XAJAX_PROCESSING_EVENT_BEFORE, $mFunction);
 	}
 	function canProcessRequests()			{ return $this->canProcessRequest(); }
 	function processRequests()				{ return $this->processRequest(); }
-	function setCallableObject(&$oObject)	{ return $this->registerCallableObject($oObject); }
-	function debugOn()						{ return $this->setFlag('debug',true); }
-	function debugOff()						{ return $this->setFlag('debug',false); }
-	function statusMessagesOn()			{ return $this->setFlag('statusMessages',true); }
-	function statusMessagesOff()			{ return $this->setFlag('statusMessages',false); }
-	function waitCursorOn()				{ return $this->setFlag('waitCursor',true); }
-	function waitCursorOff()				{ return $this->setFlag('waitCursor',false); }
-	function exitAllowedOn()				{ return $this->setFlag('exitAllowed',true); }
-	function exitAllowedOff()				{ return $this->setFlag('exitAllowed',false); }
-	function errorHandlerOn()				{ return $this->setFlag('errorHandler',true); }
-	function errorHandlerOff()				{ return $this->setFlag('errorHandler',false); }
-	function cleanBufferOn()				{ return $this->setFlag('cleanBuffer',true); }
-	function cleanBufferOff()				{ return $this->setFlag('cleanBuffer',false); }
-	function decodeUTF8InputOn()			{ return $this->setFlag('decodeUTF8Input',true); }
-	function decodeUTF8InputOff()			{ return $this->setFlag('decodeUTF8Input',false); }
-	function outputEntitiesOn()			{ return $this->setFlag('outputEntities',true); }
-	function outputEntitiesOff()			{ return $this->setFlag('outputEntities',false); }
-	function allowBlankResponseOn()		{ return $this->setFlag('allowBlankResponse',true); }
-	function allowBlankResponseOff()		{ return $this->setFlag('allowBlankResponse',false); }
+	function setCallableObject(&$oObject)	{ return $this->register(XAJAX_CALLABLE_OBJECT, $oObject); }
+	function debugOn()						{ return $this->configure('debug',true); }
+	function debugOff()						{ return $this->configure('debug',false); }
+	function statusMessagesOn()				{ return $this->configure('statusMessages',true); }
+	function statusMessagesOff()			{ return $this->configure('statusMessages',false); }
+	function waitCursorOn()					{ return $this->configure('waitCursor',true); }
+	function waitCursorOff()				{ return $this->configure('waitCursor',false); }
+	function exitAllowedOn()				{ return $this->configure('exitAllowed',true); }
+	function exitAllowedOff()				{ return $this->configure('exitAllowed',false); }
+	function errorHandlerOn()				{ return $this->configure('errorHandler',true); }
+	function errorHandlerOff()				{ return $this->configure('errorHandler',false); }
+	function cleanBufferOn()				{ return $this->configure('cleanBuffer',true); }
+	function cleanBufferOff()				{ return $this->configure('cleanBuffer',false); }
+	function decodeUTF8InputOn()			{ return $this->configure('decodeUTF8Input',true); }
+	function decodeUTF8InputOff()			{ return $this->configure('decodeUTF8Input',false); }
+	function outputEntitiesOn()				{ return $this->configure('outputEntities',true); }
+	function outputEntitiesOff()			{ return $this->configure('outputEntities',false); }
+	function allowBlankResponseOn()			{ return $this->configure('allowBlankResponse',true); }
+	function allowBlankResponseOff()		{ return $this->configure('allowBlankResponse',false); }
 }
