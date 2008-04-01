@@ -1,0 +1,14 @@
+
+1.0
+- Initial public release at ez.no
+- xajax 0.2.3 (library update by Bruce Morrison)
+
+1.1
+- Upgraded xajax to 0.2.4 brucem@designit.com.au
+- Moved the xajax.ini file from settings to install directory
+
+2.0.0
+- renaming to ezxajax
+- ez4 version for php5 without strict warnings
+( include update lib/xajax libaries for example replace depricated php5 function
+'is_a( A, B)' => A instanceof B )
