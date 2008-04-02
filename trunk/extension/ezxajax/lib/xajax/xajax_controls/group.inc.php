@@ -19,16 +19,16 @@
 
 /*
 	Section: Description
-	
+
 	This file contains the class declarations for the following HTML Controls:
-	
+
 	- ol, ul, li
 	- dl, dt, dd
 	- table, caption, colgroup, col, thead, tfoot, tbody, tr, td, th
-	
+
 	The following tags are deprecated as of HTML 4.01, therefore, they will not
 	be supported:
-	
+
 	- dir, menu
 */
 
@@ -37,12 +37,12 @@ class clsList extends xajaxControlContainer
 	function clsList($sTag, $aConfiguration=array())
 	{
 		$this->clearEvent_AddItem();
-			
+
 		xajaxControlContainer::xajaxControlContainer($sTag, $aConfiguration);
 
 		$this->sClass = '%block';
 	}
-	
+
 	function addItem($mItem, $mConfiguration=null)
 	{
 		if (null != $this->eventAddItem) {
@@ -53,26 +53,26 @@ class clsList extends xajaxControlContainer
 			$this->addChild($objItem);
 		}
 	}
-	
+
 	function addItems($aItems, $mConfiguration=null)
 	{
 		foreach ($aItems as $mItem)
 			$this->addItem($mItem, $mConfiguration);
 	}
-	
+
 	function clearEvent_AddItem()
 	{
 		$this->eventAddItem = null;
 	}
-	
+
 	function setEvent_AddItem($mFunction)
 	{
 		$this->eventAddItem = $mFunction;
 	}
-	
+
 	function &_onAddItem($mItem, $mConfiguration)
 	{
-		$objItem =& new clsLI(array(
+		$objItem = new clsLI(array(
 			'child' => new clsLiteral($mItem)
 			));
 		return $objItem;
@@ -142,12 +142,12 @@ class clsTableRowContainer extends xajaxControlContainer
 {
 	var $eventAddRow;
 	var $eventAddRowCell;
-	
+
 	function clsTableRowContainer($sTag, $aConfiguration=array())
 	{
 		$this->clearEvent_AddRow();
 		$this->clearEvent_AddRowCell();
-			
+
 		xajaxControlContainer::xajaxControlContainer($sTag, $aConfiguration);
 
 		$this->sClass = '%block';
@@ -163,13 +163,13 @@ class clsTableRowContainer extends xajaxControlContainer
 			$this->addChild($objRow);
 		}
 	}
-		
+
 	function addRows($aRows, $mConfiguration=null)
 	{
 		foreach ($aRows as $aCells)
 			$this->addRow($aCells, $mConfiguration);
 	}
-	
+
 	function clearEvent_AddRow()
 	{
 		$this->eventAddRow = null;
@@ -178,7 +178,7 @@ class clsTableRowContainer extends xajaxControlContainer
 	{
 		$this->eventAddRowCell = null;
 	}
-	
+
 	function setEvent_AddRow($mFunction)
 	{
 		$mPrevious = $this->eventAddRow;
@@ -191,10 +191,10 @@ class clsTableRowContainer extends xajaxControlContainer
 		$this->eventAddRowCell = $mFunction;
 		return $mPrevious;
 	}
-	
+
 	function &_onAddRow($aCells, $mConfiguration=null)
 	{
-		$objTableRow =& new clsTr();
+		$objTableRow = new clsTr();
 		if (null != $this->eventAddRowCell)
 			$objTableRow->setEvent_AddCell($this->eventAddRowCell);
 		$objTableRow->addCells($aCells, $mConfiguration);
@@ -204,9 +204,9 @@ class clsTableRowContainer extends xajaxControlContainer
 
 /*
 	Class: clsTable
-	
-	A <xajaxControlContainer> derived class that aids in the construction of HTML 
-	tables.  Inherently, <xajaxControl> and <xajaxControlContainer> derived classes 
+
+	A <xajaxControlContainer> derived class that aids in the construction of HTML
+	tables.  Inherently, <xajaxControl> and <xajaxControlContainer> derived classes
 	support <xajaxRequest> based events using the <xajaxControl->setEvent> method.
 */
 class clsTable extends xajaxControlContainer
@@ -220,10 +220,10 @@ class clsTable extends xajaxControlContainer
 	var $eventAddFooter;
 	var $eventAddFooterRow;
 	var $eventAddFooterRowCell;
-	
+
 	/*
 		Function: clsTable
-		
+
 		Constructs and initializes an instance of the class.
 	*/
 	function clsTable($aConfiguration=array())
@@ -237,7 +237,7 @@ class clsTable extends xajaxControlContainer
 		$this->clearEvent_AddFooter();
 		$this->clearEvent_AddFooterRow();
 		$this->clearEvent_AddFooterRowCell();
-		
+
 		xajaxControlContainer::xajaxControlContainer('table', $aConfiguration);
 
 		$this->sClass = '%block';
@@ -273,7 +273,7 @@ class clsTable extends xajaxControlContainer
 			$this->addChild($objFooter);
 		}
 	}
-		
+
 	function addBodies($aBodies, $mConfiguration=null)
 	{
 		foreach ($aBodies as $aRows)
@@ -316,7 +316,7 @@ class clsTable extends xajaxControlContainer
 	{
 		$this->eventAddFooterRowCell = null;
 	}
-	
+
 	function setEvent_AddHeader($mFunction)
 	{
 		$mPrevious = $this->eventAddHeader;
@@ -371,10 +371,10 @@ class clsTable extends xajaxControlContainer
 		$this->eventAddFooterRowCell = $mFunction;
 		return $mPrevious;
 	}
-	
+
 	function &_onAddHeader($aRows, $mConfiguration)
 	{
-		$objTableHeader =& new clsThead();
+		$objTableHeader = new clsThead();
 		if (null != $this->eventAddHeaderRow)
 			$objTableHeader->setEvent_AddRow($this->eventAddHeaderRow);
 		if (null != $this->eventAddHeaderRowCell)
@@ -384,7 +384,7 @@ class clsTable extends xajaxControlContainer
 	}
 	function &_onAddBody($aRows, $mConfiguration)
 	{
-		$objTableBody =& new clsTbody();
+		$objTableBody = new clsTbody();
 		if (null != $this->eventAddBodyRow)
 			$objTableBody->setEvent_AddRow($this->eventAddBodyRow);
 		if (null != $this->eventAddBodyRowCell)
@@ -394,7 +394,7 @@ class clsTable extends xajaxControlContainer
 	}
 	function &_onAddFooter($aRows, $mConfiguration)
 	{
-		$objTableFooter =& new clsTfoot();
+		$objTableFooter = new clsTfoot();
 		if (null != $this->eventAddFooterRow)
 			$objTableFooter->setEvent_AddRow($this->eventAddFooterRow);
 		if (null != $this->eventAddFooterRowCell)
@@ -442,7 +442,7 @@ class clsThead extends clsTableRowContainer
 {
 	/*
 		Function: clsThead
-		
+
 		Constructs and initializes an instance of the class.
 	*/
 	function clsThead($aConfiguration=array())
@@ -458,7 +458,7 @@ class clsTbody extends clsTableRowContainer
 {
 	/*
 		Function: clsTbody
-		
+
 		Constructs and initializes an instance of the class.
 	*/
 	function clsTbody($aConfiguration=array())
@@ -474,7 +474,7 @@ class clsTfoot extends clsTableRowContainer
 {
 	/*
 		Function: clsTfoot
-		
+
 		Constructs and initializes an instance of the class.
 	*/
 	function clsTfoot($aConfiguration=array())
@@ -489,21 +489,21 @@ class clsTfoot extends clsTableRowContainer
 class clsTr extends xajaxControlContainer
 {
 	var $eventAddCell;
-	
+
 	/*
 		Function: clsTr
-		
+
 		Constructs and initializes an instance of the class.
 	*/
 	function clsTr($aConfiguration=array())
 	{
 		$this->clearEvent_AddCell();
-			
+
 		xajaxControlContainer::xajaxControlContainer('tr', $aConfiguration);
 
 		$this->sClass = '%block';
 	}
-	
+
 	function addCell($mCell, $mConfiguration=null)
 	{
 		if (null != $this->eventAddCell) {
@@ -514,25 +514,25 @@ class clsTr extends xajaxControlContainer
 			$this->addChild($objCell);
 		}
 	}
-	
+
 	function addCells($aCells, $mConfiguration=null)
 	{
 		foreach ($aCells as $mCell)
 			$this->addCell($mCell, $mConfiguration);
 	}
-	
+
 	function clearEvent_AddCell()
 	{
 		$this->eventAddCell = null;
 	}
-	
+
 	function setEvent_AddCell($mFunction)
 	{
 		$mPrevious = $this->eventAddCell;
 		$this->eventAddCell = $mFunction;
 		return $mPrevious;
 	}
-	
+
 	function &_onAddCell($mCell, $mConfiguration=null)
 	{
 		return new clsTd(array(
@@ -548,7 +548,7 @@ class clsTd extends xajaxControlContainer
 {
 	/*
 		Function: clsTd
-		
+
 		Constructs and initializes an instance of the class.
 	*/
 	function clsTd($aConfiguration=array())
@@ -566,7 +566,7 @@ class clsTh extends xajaxControlContainer
 {
 	/*
 		Function: clsTh
-		
+
 		Constructs and initializes an instance of the class.
 	*/
 	function clsTh($aConfiguration=array())

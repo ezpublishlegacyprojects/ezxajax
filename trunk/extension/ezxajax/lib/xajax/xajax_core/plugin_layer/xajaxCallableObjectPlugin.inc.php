@@ -120,7 +120,7 @@ class xajaxCallableObjectPlugin extends xajaxRequestPlugin
 //EndSkipDebug
 
 				if (false === $xco instanceof xajaxCallableObject )
-					$xco =& new xajaxCallableObject($xco);
+					$xco = new xajaxCallableObject($xco);
 
 				if (2 < count($aArgs))
 					if (is_array($aArgs[2]))

@@ -114,8 +114,7 @@ class xajaxCallableObject
 			if ($sClass == $sMethodName)
 				$bInclude = false;
 			if ($bInclude)
-				$aRequests[strtolower($sMethodName)] =&
-					new xajaxRequest("{$sXajaxPrefix}{$sClass}.{$sMethodName}");
+				$aRequests[strtolower($sMethodName)] = new xajaxRequest("{$sXajaxPrefix}{$sClass}.{$sMethodName}");
 		}
 
 		return $aRequests;
