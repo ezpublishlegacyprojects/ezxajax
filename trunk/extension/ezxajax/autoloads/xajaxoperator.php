@@ -90,15 +90,47 @@ class XajaxOperator
 
                     if ( count( $functionFiles ) > 0 )
                     {
+                        $isWindows = strtolower( substr( PHP_OS, 0, 3 ) ) == 'win';
                         foreach ( $functionFiles as $function => $functionFile )
                         {
+                            $found = false;
+                            $triedPaths = array();
                             foreach ( $directoryList as $directory )
                             {
-                                $handlerFile = $directory . '/' . strtolower( $functionFile ) . '.php';
-                                if ( file_exists( $handlerFile ) )
+                                if ( substr( $functionFile, -4 ) != '.php' )
                                 {
-                                    $xajax->registerFunction( $function, $handlerFile );
+                                    $functionFile .= '.php';
                                 }
+
+                                $handlerFile = $directory . '/' . $functionFile;
+                                $realPath = realpath( $handlerFile );
+
+                                $triedPaths[] = $handlerFile;
+                                if ( $realPath !== false )
+                                {
+                                    // Microsoft Windows uses case insensitive path names. However, We want people to write cross platform xajax extensions.
+                                    // Therefore we will force them to use the file name as it is on the file system.
+                                    if ( $isWindows &&
+                                         strcmp( $handlerFile, str_replace( '\\', '/', substr( $realPath, - strlen( $handlerFile ) ) ) ) !== 0 )
+                                    {
+                                        eZDebug::writeError( 'In order to write cross platform extensions, the function file names specified by AvailableFunctions[] in xajax.ini should exactly match the file names on the file system (case sensitive)!' . "\r\n" .
+                                                             'Please correct! Requested: ' . $handlerFile . ', found but not accepted: ' . str_replace( '\\', '/', substr( $realPath, - strlen( $handlerFile ) ) ), 'XajaxOperator::modify()' );
+                                        break;
+                                    }
+                                    // Still need to check if file exists, because on BSD systems realpath() doesn't fail if only the last path component doesn't exist.
+                                    // See http://www.php.net/realpath.
+                                    else if ( file_exists( $handlerFile ) )
+                                    {
+                                        $xajax->registerFunction( $function, $handlerFile );
+                                        $found = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if ( !$found )
+                            {
+                                eZDebug::writeError( 'Unable to find ezxajax function file, tried paths: ' . implode( ', ', $triedPaths ), 'XajaxOperator::modify()' );
                             }
                         }
                     }
