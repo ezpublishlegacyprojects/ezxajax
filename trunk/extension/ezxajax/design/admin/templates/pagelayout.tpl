@@ -287,10 +287,6 @@ div#leftmenu-design { margin: 0.5em 4px 0.5em 0.5em; }
 <!-- Maincontent START -->
 {* Main area START *}
 
-{cache-block keys=$uri_string expiry=0 ignore_content_expiry}
-<p>Date/time in cache block: <strong>{currentdate()|l10n('datetime')}</strong></p>
-{/cache-block}
-
 {include uri='design:page_mainarea.tpl'}
 
 {* Main area END *}
